@@ -124,9 +124,9 @@ _defaults = {
     "num_classes": 21,
     # ----------------------------------------#
     #   所使用的的主干网络
-    #   此处可选：mobilenet| xception | hg | yolov8s | yolov8m
+    #   此处可选：mobilenet| xception | hgnetv2l | hgnetv2x | yolov8s | yolov8m | mobilenetv3s | mobilenetv3l
     # ----------------------------------------#
-    "backbone": "hg",
+    "backbone": "hgnetv2l",
     # ----------------------------------------#
     #   输入图片的大小
     # ----------------------------------------#

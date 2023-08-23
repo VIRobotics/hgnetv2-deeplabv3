@@ -64,6 +64,11 @@ class DeeplabV3(object):
         #   没有GPU可以设置成False
         # -------------------------------#
         "cuda": True,
+
+        # 使用的高特征解码模块：
+        # ASPP 原版空洞卷积
+        # transformer 使用TransFormer进行解码
+        "pp":"ASPP"
     }
 
     # ---------------------------------------------------#
@@ -106,7 +111,7 @@ class DeeplabV3(object):
         #   载入模型与权值
         # -------------------------------#
         self.net = DeepLab(num_classes=self.num_classes, backbone=self.backbone,
-                           downsample_factor=self.downsample_factor, pretrained=False)
+                           downsample_factor=self.downsample_factor, pretrained=False,pp=self.pp)
 
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.net.load_state_dict(torch.load(self.model_path, map_location=device))

@@ -111,7 +111,7 @@ class DeeplabV3(object):
         #   载入模型与权值
         # -------------------------------#
         self.net = DeepLab(num_classes=self.num_classes, backbone=self.backbone,
-                           downsample_factor=self.downsample_factor, pretrained=False,pp=self.pp)
+                           downsample_factor=self.downsample_factor, pretrained=True,pp=self.pp)
 
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.net.load_state_dict(torch.load(self.model_path, map_location=device))

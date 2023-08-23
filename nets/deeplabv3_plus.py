@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import sys
 from nets.mobilenetv2 import gen_mobilenetv2
-from nets.TransPP import TransPP
+from nets.TransEnc import TransEnc
 from nets.third_party_backbone import mobilenetv3s,mobilenetv3l,hgnetv2l,hgnetv2x,yolov8m,yolov8s
 from nets.xception import xception
 
@@ -140,7 +140,7 @@ class DeepLab(nn.Module):
         #   利用不同膨胀率的膨胀卷积进行特征提取
         # -----------------------------------------#
         if pp=="transformer":
-            self.aspp = TransPP(dim_in=in_channels, dim_out=256, rate=16 // downsample_factor)
+            self.aspp = TransEnc(dim_in=in_channels, dim_out=256, rate=16 // downsample_factor)
         elif pp=="ASPP":
             self.aspp = ASPP(dim_in=in_channels, dim_out=256, rate=16 // downsample_factor)
         else:

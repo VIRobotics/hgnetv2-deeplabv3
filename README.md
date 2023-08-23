@@ -21,6 +21,8 @@
 
 仪酷LabView工业AI推理插件工具包已经支持此项目包括最新主干在内的模型
 
+如果需要原版代码 请访问https://github.com/bubbliiiing/deeplabv3-plus-pytorch
+
 **`2022-04`**:**支持多GPU训练。**
 
 **`2022-03`**:**进行大幅度更新、支持step、cos学习率下降法、支持adam、sgd优化器选择、支持学习率根据batch_size自适应调整。**  
@@ -58,10 +60,6 @@ YOLOv8(S和M尺寸，目前存在低mIOU的问题，不推荐)
 ### 所需环境
 
 参看requirements.txt
-
-### 注意事项
-
-代码中的deeplab_mobilenetv2.pth和deeplab_xception.pth是基于VOC拓展数据集训练的。训练和预测时注意修改backbone。
 
 ### 文件下载
 

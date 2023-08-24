@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import sys
 from nets.mobilenetv2 import gen_mobilenetv2
+from nets.TransEnc import TransEnc
 from nets.third_party_backbone import mobilenetv3s,mobilenetv3l,hgnetv2l,hgnetv2x,yolov8m,yolov8s
 from nets.xception import xception
 
@@ -123,13 +124,13 @@ class ASPP(nn.Module):
 
 
 class DeepLab(nn.Module):
-    def __init__(self, num_classes, backbone="mobilenet", pretrained=True, downsample_factor=16):
+    def __init__(self, num_classes, backbone="mobilenet", pretrained=True, downsample_factor=16,pp="ASPP"):
         super(DeepLab, self).__init__()
         mod = sys.modules[__name__]
         backbone_list=["mobilenetv2","mobilenetv3s","mobilenetv3l",
                             'hgnetv2l','hgnetv2x','yolov8m','yolov8s','xception']
         if (backbone not in backbone_list )and hasattr(mod, backbone) :
-            raise ValueError(f'Unsupported backbone - `{backbone}`, Use {";".join(backbone_list)} hg.')
+            raise ValueError(f'Unsupported backbone - `{backbone}`, Use {";".join(backbone_list)} .')
         backbone_func= getattr(mod, backbone)
         self.backbone = backbone_func(downsample_factor=downsample_factor, pretrained=pretrained)
         in_channels = self.backbone.feature_ch
@@ -138,7 +139,12 @@ class DeepLab(nn.Module):
         #   ASPP特征提取模块
         #   利用不同膨胀率的膨胀卷积进行特征提取
         # -----------------------------------------#
-        self.aspp = ASPP(dim_in=in_channels, dim_out=256, rate=16 // downsample_factor)
+        if pp=="transformer":
+            self.aspp = TransEnc(dim_in=in_channels, dim_out=256, rate=16 // downsample_factor)
+        elif pp=="ASPP":
+            self.aspp = ASPP(dim_in=in_channels, dim_out=256, rate=16 // downsample_factor)
+        else:
+            raise ValueError(f'Unsupported PP Modules - `{pp}`, Use {";".join(["transformer","ASPP"])}.')
 
         # ----------------------------------#
         #   浅层特征边

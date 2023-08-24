@@ -56,6 +56,11 @@ def download_weights(backbone, model_dir="./model_data"):
     download_urls = {
         'mobilenet' : 'https://github.com/bubbliiiing/deeplabv3-plus-pytorch/releases/download/v1.0/mobilenet_v2.pth.tar',
         'xception'  : 'https://github.com/bubbliiiing/deeplabv3-plus-pytorch/releases/download/v1.0/xception_pytorch_imagenet.pth',
+        'hgnetv2l': 'https://github.com/ultralytics/assets/releases/download/v0.0.0/rtdetr-l.pt',
+        "hgnetv2x":"https://github.com/ultralytics/assets/releases/download/v0.0.0/rtdetr-x.pt",
+        "yolov8s":"https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8s-cls.pt",
+        "yolov8m":"https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8m-cls.pt",
+
     }
     url = download_urls[backbone]
     

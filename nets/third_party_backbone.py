@@ -1,3 +1,5 @@
+import os.path
+
 from torch import nn
 from ultralytics.models import YOLO, RTDETR
 import sys
@@ -42,7 +44,7 @@ class YOLOv8_backbone(nn.Module):   #### Not Recommand (Low mIOU)
             model = kwargs["model"]
             kwargs.__delitem__("model")
         super().__init__(*args, **kwargs)
-        m = YOLO(model)
+        m = YOLO(os.path.join("./model_data/",model))
         self.__model = m.model.model
         arch=model[6]
         self.__dict__.update(**{"s": {"feature_ch": 512, "low_ch": 128},
@@ -71,7 +73,7 @@ class HG_backbone(nn.Module):
         super().__init__(*args, **kwargs)
         m=RTDETR(f"rtdetr-{arch}.yaml")
         if pretrained:
-            m.load(f"rtdetr-{arch}.pt")
+            m.load(f"./model_data/rtdetr-{arch}.pt")
         self.__model = m.model.model
         self.__dict__.update(**{"l":{"feature_ch":2048,"low_ch":512},
                                 "x":{"feature_ch":2048,"low_ch":512}

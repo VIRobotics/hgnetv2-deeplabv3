@@ -76,6 +76,8 @@ if __name__ == "__main__":
     #   yolov8s | yolov8m
     # ---------------------------------#
     backbone = "hgnetv2l"
+
+    pp="ASPP"
     # ----------------------------------------------------------------------------------------------------------------------------#
     #   pretrained      是否使用主干网络的预训练权重，此处使用的是主干的权重，因此是在模型构建的时候进行加载的。
     #                   如果设置了model_path，则主干的权值无需加载，pretrained的值无意义。
@@ -278,7 +280,7 @@ if __name__ == "__main__":
 
 
     model = DeepLab(num_classes=num_classes, backbone=backbone, downsample_factor=downsample_factor,
-                    pretrained=pretrained,pp="transformer")
+                    pretrained=pretrained,pp=pp)
     if not pretrained:
         weights_init(model)
     if model_path != '':

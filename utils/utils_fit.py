@@ -18,7 +18,6 @@ def fit_one_epoch(model_train, model, loss_history, eval_callback, optimizer, ep
     val_f_score     = 0
 
     if local_rank == 0:
-        print('Start Train')
         pbar = tqdm(total=epoch_step,desc=f'Epoch {epoch + 1}/{Epoch}',postfix=dict,mininterval=0.3)
     model_train.train()
     for iteration, batch in enumerate(gen):
@@ -108,8 +107,6 @@ def fit_one_epoch(model_train, model, loss_history, eval_callback, optimizer, ep
 
     if local_rank == 0:
         pbar.close()
-        print('Finish Train')
-        print('Start Validation')
         pbar = tqdm(total=epoch_step_val, desc=f'Epoch {epoch + 1}/{Epoch}',postfix=dict,mininterval=0.3)
 
     model_train.eval()
@@ -156,7 +153,6 @@ def fit_one_epoch(model_train, model, loss_history, eval_callback, optimizer, ep
             
     if local_rank == 0:
         pbar.close()
-        print('Finish Validation')
         loss_history.append_loss(epoch + 1, total_loss / epoch_step, val_loss / epoch_step_val)
         eval_callback.on_epoch_end(epoch + 1, model_train)
         print('Epoch:'+ str(epoch + 1) + '/' + str(Epoch))

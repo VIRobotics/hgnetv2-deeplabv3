@@ -9,7 +9,7 @@ import torch.nn.functional as F
 from PIL import Image
 from torch import nn
 
-from nets.deeplabv3_plus import DeepLab
+from nets.labs import Labs
 from utils.utils import cvtColor, preprocess_input, resize_image, show_config
 USE_INTEL=False
 try:
@@ -39,7 +39,7 @@ class DeeplabV3(object):
         # ----------------------------------------#
         #   所使用的的主干网络：
         #   mobilenet
-        #   xception    
+        #   xception
         # ----------------------------------------#
         "BackBone": "mobilenet",
         # ----------------------------------------#
@@ -68,7 +68,7 @@ class DeeplabV3(object):
         # 使用的高特征解码模块：
         # ASPP 原版空洞卷积
         # transformer 使用TransFormer进行解码
-        "pp":"ASPP"
+        "pp":"aspp"
     }
 
     # ---------------------------------------------------#
@@ -110,8 +110,8 @@ class DeeplabV3(object):
         # -------------------------------#
         #   载入模型与权值
         # -------------------------------#
-        self.net = DeepLab(num_classes=self.num_classes, backbone=self.backbone,
-                           downsample_factor=self.downsample_factor, pretrained=True,pp=self.pp)
+        self.net = Labs(num_classes=self.num_classes, backbone=self.backbone,
+                           downsample_factor=self.downsample_factor, pretrained=True,header=self.pp)
 
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.net.load_state_dict(torch.load(self.model_path, map_location=device))

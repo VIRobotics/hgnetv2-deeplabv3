@@ -2,61 +2,11 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import sys
-from nets.mobilenetv2 import gen_mobilenetv2
 from nets.TransEnc import TransEnc
-from nets.third_party_backbone import mobilenetv3s,mobilenetv3l,hgnetv2l,hgnetv2x,yolov8m,yolov8s
-from nets.xception import xception
+from nets.BackBone import mobilenetv3s,mobilenetv3l,hgnetv2l,hgnetv2x,yolov8m,yolov8s,xception,mobilenetv2
 
 
-class MobileNetV2(nn.Module):
-    def __init__(self, downsample_factor=8, pretrained=True):
-        super(MobileNetV2, self).__init__()
-        from functools import partial
-        self.low_ch=24
-        self.feature_ch=320
-        model = gen_mobilenetv2(pretrained)
-        self.features = model.features[:-1]
 
-        self.total_idx = len(self.features)
-        self.down_idx = [2, 4, 7, 14]
-
-        if downsample_factor == 8:
-            for i in range(self.down_idx[-2], self.down_idx[-1]):
-                self.features[i].apply(
-                    partial(self._nostride_dilate, dilate=2)
-                )
-            for i in range(self.down_idx[-1], self.total_idx):
-                self.features[i].apply(
-                    partial(self._nostride_dilate, dilate=4)
-                )
-        elif downsample_factor == 16:
-            for i in range(self.down_idx[-1], self.total_idx):
-                self.features[i].apply(
-                    partial(self._nostride_dilate, dilate=2)
-                )
-
-    def _nostride_dilate(self, m, dilate):
-        classname = m.__class__.__name__
-        if classname.find('Conv') != -1:
-            if m.stride == (2, 2):
-                m.stride = (1, 1)
-                if m.kernel_size == (3, 3):
-                    m.dilation = (dilate // 2, dilate // 2)
-                    m.padding = (dilate // 2, dilate // 2)
-            else:
-                if m.kernel_size == (3, 3):
-                    m.dilation = (dilate, dilate)
-                    m.padding = (dilate, dilate)
-
-    def forward(self, x):
-        low_level_features = self.features[:4](x)
-        x = self.features[4:](low_level_features)
-        return low_level_features, x
-
-    # -----------------------------------------#
-
-def mobilenetv2(*args,**kwargs):
-    return MobileNetV2(*args,**kwargs)
 #   ASPP特征提取模块
 #   利用不同膨胀率的膨胀卷积进行特征提取
 # -----------------------------------------#

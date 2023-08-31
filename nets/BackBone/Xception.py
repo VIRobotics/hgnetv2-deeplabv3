@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.utils.model_zoo as model_zoo
 from nets.modules import SeparableConv2d,ASBlock
-
+from PATH import WTS_STORAGE_DIR
 
 
 
@@ -122,7 +122,7 @@ class Xception(nn.Module):
         return low_featrue_layer, x
 
 
-def load_url(url, model_dir='./model_data', map_location=None):
+def load_url(url, model_dir=WTS_STORAGE_DIR, map_location=None):
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
     filename = url.split('/')[-1]

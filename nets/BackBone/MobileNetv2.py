@@ -5,7 +5,7 @@ import os
 import torch
 import torch.nn as nn
 from torch.nn import BatchNorm2d
-
+from PATH import WTS_STORAGE_DIR
 class MobileNetV2Base(nn.Module):
     def __init__(self, n_class=1000, input_size=224, width_mult=1., *args, **kwargs):
         super().__init__()
@@ -70,7 +70,7 @@ class MobileNetV2Base(nn.Module):
                 m.bias.data.zero_()
 
 
-def load_url(url, model_dir='./model_data', map_location=None):
+def load_url(url, model_dir=WTS_STORAGE_DIR, map_location=None):
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
     filename = url.split('/')[-1]

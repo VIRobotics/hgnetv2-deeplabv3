@@ -2,6 +2,7 @@ import sys
 from torch import nn
 import os
 from ultralytics.models import YOLO
+from PATH import WTS_STORAGE_DIR
 class YOLOv8_backbone(nn.Module):   #### Not Recommand (Low mIOU)
     def __init__(self, *args, **kwargs):
         if "model" not in kwargs.keys():
@@ -10,7 +11,7 @@ class YOLOv8_backbone(nn.Module):   #### Not Recommand (Low mIOU)
             model = kwargs["model"]
             kwargs.__delitem__("model")
         super().__init__(*args, **kwargs)
-        m = YOLO(os.path.join("./model_data/",model))
+        m = YOLO(os.path.join(WTS_STORAGE_DIR,model))
         self.__model = m.model.model
         arch=model[6]
         self.__dict__.update(**{"s": {"feature_ch": 512, "low_ch": 128},

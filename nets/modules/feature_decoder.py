@@ -59,8 +59,6 @@ class ASPP(nn.Module):
         #   将五个分支的内容堆叠起来
         #   然后1x1卷积整合特征。
         # -----------------------------------------#
-        for l in [conv1x1, conv3x3_1, conv3x3_2, conv3x3_3, global_feature]:
-            print(l.shape)
         feature_cat = torch.cat([conv1x1, conv3x3_1, conv3x3_2, conv3x3_3, global_feature], dim=1)
         result = self.conv_cat(feature_cat)
         return result
@@ -78,7 +76,6 @@ class TransEnc(nn.Module):
         )
         self.__AIFI=AIFI(dim_in,1024,8)
         self.__tflayer=TransformerLayer(dim_in,8,256*3)
-        #self.__conv1x1=Conv(dim_in, 256*3, 1, 1, None, 1, 1, False)
         self.branch5_conv = nn.Conv2d(dim_in, dim_out, 1, 1, 0, bias=True)
         self.branch5_bn = nn.BatchNorm2d(dim_out, momentum=bn_mom)
         self.branch5_relu = nn.ReLU(inplace=True)

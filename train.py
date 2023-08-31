@@ -7,8 +7,8 @@ import torch.backends.cudnn as cudnn
 import torch.distributed as dist
 import torch.optim as optim
 from torch.utils.data import DataLoader
-
-from nets.deeplabv3_plus import DeepLab
+from nets.labs import Labs
+from utils.check import check_amp
 from nets.deeplabv3_training import (get_lr_scheduler, set_optimizer_lr,
                                      weights_init)
 from utils.callbacks import LossHistory, EvalCallback
@@ -62,7 +62,10 @@ if __name__ == "__main__":
     #   fp16        是否使用混合精度训练
     #               可减少约一半的显存、需要pytorch1.7.1以上
     # ---------------------------------------------------------------------#
-    fp16 = False
+    if Cuda and torch.cuda.is_available():
+        fp16 = check_amp()
+    else:
+        fp16=False
     # -----------------------------------------------------#
     #   num_classes     训练自己的数据集必须要修改的
     #                   自己需要的分类个数+1，如2+1
@@ -76,8 +79,8 @@ if __name__ == "__main__":
     #   yolov8s | yolov8m
     # ---------------------------------#
     backbone = "hgnetv2l"
-
-    pp="ASPP"
+    pp="transformer"
+    #pp="ASPP"
     # ----------------------------------------------------------------------------------------------------------------------------#
     #   pretrained      是否使用主干网络的预训练权重，此处使用的是主干的权重，因此是在模型构建的时候进行加载的。
     #                   如果设置了model_path，则主干的权值无需加载，pretrained的值无意义。
@@ -157,8 +160,8 @@ if __name__ == "__main__":
     #                       (当Freeze_Train=False时失效)
     # ------------------------------------------------------------------#
     Init_Epoch = 0
-    Freeze_Epoch = 50
-    Freeze_batch_size = 8
+    Freeze_Epoch = 75
+    Freeze_batch_size = 10
     # ------------------------------------------------------------------#
     #   解冻阶段训练参数
     #   此时模型的主干不被冻结了，特征提取网络会发生改变
@@ -167,7 +170,7 @@ if __name__ == "__main__":
     #   Unfreeze_batch_size     模型在解冻后的batch_size
     # ------------------------------------------------------------------#
     UnFreeze_Epoch = 100
-    Unfreeze_batch_size = 4
+    Unfreeze_batch_size = 8
     # ------------------------------------------------------------------#
     #   Freeze_Train    是否进行冻结训练
     #                   默认先冻结主干训练后解冻训练。
@@ -229,7 +232,7 @@ if __name__ == "__main__":
     #   种类多（十几类）时，如果batch_size比较大（10以上），那么设置为True
     #   种类多（十几类）时，如果batch_size比较小（10以下），那么设置为False
     # ------------------------------------------------------------------#
-    dice_loss = False
+    dice_loss = True
     # ------------------------------------------------------------------#
     #   是否使用focal loss来防止正负样本不平衡
     # ------------------------------------------------------------------#
@@ -279,8 +282,8 @@ if __name__ == "__main__":
             download_weights(backbone)
 
 
-    model = DeepLab(num_classes=num_classes, backbone=backbone, downsample_factor=downsample_factor,
-                    pretrained=pretrained,pp=pp)
+    model = Labs(num_classes=num_classes, backbone=backbone, downsample_factor=downsample_factor,
+                    pretrained=pretrained, header=pp)
     if not pretrained:
         weights_init(model)
     if model_path != '':

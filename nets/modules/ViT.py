@@ -82,3 +82,26 @@ class AIFI(TransformerEncoderLayer):
         out_h = grid_h.flatten()[..., None] @ omega[None]
 
         return torch.cat([torch.sin(out_w), torch.cos(out_w), torch.sin(out_h), torch.cos(out_h)], 1)[None]
+
+
+class TransformerLayer(nn.Module):
+    """Transformer layer https://arxiv.org/abs/2010.11929 (LayerNorm layers removed for better performance)."""
+
+    def __init__(self, c, num_heads,cout=None):
+        """Initializes a self-attention mechanism using linear transformations and multi-head attention."""
+        super().__init__()
+        if cout is None:
+            cout=c
+        self.q = nn.Linear(c, c, bias=False)
+        self.k = nn.Linear(c, c, bias=False)
+        self.v = nn.Linear(c, c, bias=False)
+        self.ma = nn.MultiheadAttention(embed_dim=cout, num_heads=num_heads)
+        self.fc1 = nn.Linear(cout, cout, bias=False)
+        self.fc2 = nn.Linear(cout, cout, bias=False)
+
+    def forward(self, x):
+        print(x.shape)
+        """Apply a transformer block to the input x and return the output."""
+        x = self.ma(self.q(x), self.k(x), self.v(x))[0] + x
+        print(x.shape)
+        return self.fc2(self.fc1(x)) + x

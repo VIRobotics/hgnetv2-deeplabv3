@@ -8,7 +8,7 @@ import cv2
 import numpy as np
 from PIL import Image
 
-from deeplab import DeeplabV3
+from AllLabs import DeeplabV3
 
 if __name__ == "__main__":
     # -------------------------------------------------------------------------#
@@ -20,15 +20,17 @@ if __name__ == "__main__":
     #   count、name_classes仅在mode='predict'和 'export_onnx'时有效
     # -------------------------------------------------------------------------#
     count = False
-    backbone = "hg"
+    backbone = "hgnetv2l"
+    pp = "transformer"
     gpu=True
     model_path = 'model_data/deeplab_hgnetv2.pth'
     model_path = 'logs/best_epoch_weights.pth'
     name_classes = ["background", "aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair", "cow",
                     "diningtable", "dog", "horse", "motorbike", "person", "pottedplant", "sheep", "sofa", "train",
                     "tvmonitor"]
-    name_classes=["x"]*81
-    deeplab = DeeplabV3(backbone=backbone, num_classes=len(name_classes), model_path=model_path,cuda=gpu)
+    #name_classes=["x"]*81
+    deeplab = DeeplabV3(num_classes=len(name_classes), backbone=backbone,model_path=model_path
+                    ,pp=pp,cuda=gpu)
     # ----------------------------------------------------------------------------------------------------------#
     #   mode用于指定测试的模式：
     #   'predict'           表示单张图片预测，如果想对预测过程进行修改，如保存图片，截取对象等，可以先看下方详细的注释

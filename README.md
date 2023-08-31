@@ -85,7 +85,7 @@ VOC拓展数据集的百度网盘如下：
 #### a、训练voc数据集
 
 1、将我提供的voc数据集放入VOCdevkit中（无需运行voc_annotation.py）。  
-2、在train.py中设置对应参数，默认参数已经对应voc数据集所需要的参数了，所以只要修改backbone和model_path即可。  
+2、在train.py中设置对应参数，默认参数已经对应voc数据集所需要的参数了，所以只要修改backbone,pp,和model_path即可。  
 3、运行train.py进行训练。
 
 #### b、训练自己的数据集
@@ -151,6 +151,9 @@ _defaults = {
     #   没有GPU可以设置成False
     # -------------------------------#
     "cuda": True,
+    # -------------------------------#
+    #   使用何种头部 transformer代表使用TransLab 使用ASPP代表使用原版
+    "pp":"transformer"
 }
 ```
 

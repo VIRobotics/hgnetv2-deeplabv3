@@ -15,6 +15,12 @@
 
 ## Top News
 
+**`2023-09`** : **新增TransLab分割头，可以通过设置pp参数切换**
+
+TransLab是一款由仪酷智能科技有限公司开发的分割头，在这款分割头里面，我们将DeepLabv3基于传统卷积的空洞卷积 换成了基于Transformer的AIFI模块
+
+~~玩Transformer玩的~~
+
 **`2023-08`**:**在原作者基础上添加多个新款Backbone（HGNetv2,yolov8系列）**
 
 如果在 新模型（HGNetv2 YOLOv8 MobileNetv3)有疑问或者建议 欢迎issue和PR

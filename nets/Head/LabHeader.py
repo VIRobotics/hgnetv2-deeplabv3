@@ -25,8 +25,8 @@ class LabHeader(BaseLabHeader):
         return self.output(low_level_features,x)
 
 
-def aspp(H, W, num_classes, low_level_channels, in_channels):
-    return LabHeader(H, W, num_classes, low_level_channels, in_channels,enc="ASPP")
+def aspp(H, W, num_classes, low_level_channels, in_channels,**kwargs):
+    return LabHeader(H, W, num_classes, low_level_channels, in_channels,enc="ASPP",**kwargs)
 
-def transformer(H, W, num_classes, low_level_channels, in_channels):
-    return LabHeader(H, W, num_classes, low_level_channels, in_channels,enc="transformer")
+def transformer(H, W, num_classes, low_level_channels, in_channels,**kwargs):
+    return LabHeader(H, W, num_classes, low_level_channels, in_channels,enc="transformer",**kwargs)

@@ -13,7 +13,7 @@ def check_amp(device="0"):
         return False
     DEVICE = torch.device("cuda:0")
     m=mobilenet_v3_small(MobileNet_V3_Small_Weights.IMAGENET1K_V1)
-    im_path = ASSETS / 'bus.jpg'  # image to check
+    im_path = ASSETS / 'amp-test.jpg'  # image to check
     im=pre(Image.open(im_path))
     im = torch.unsqueeze(im, 0)
     im=im.cuda()

@@ -12,7 +12,7 @@ class HG_backbone(nn.Module):
         super().__init__(*args, **kwargs)
         m=RTDETR(f"rtdetr-{arch}.yaml")
         if pretrained:
-            m.load(WTS_STORAGE_DIR/"rtdetr-{arch}.pt")
+            m.load(WTS_STORAGE_DIR/f"rtdetr-{arch}.pt")
         self.__model = m.model.model
         self.__dict__.update(**{"l":{"feature_ch":2048,"low_ch":512},
                                 "x":{"feature_ch":2048,"low_ch":512}

@@ -1,4 +1,4 @@
-## DeepLabv3+：Encoder-Decoder with Atrous Separable Convolution语义分割模型在Pytorch当中的实现
+## Torch版的TransLab和DeepLabv3+全家桶
 ---
 
 ### 目录
@@ -14,6 +14,12 @@
 9. [参考资料 Reference](#Reference)
 
 ## Top News
+
+**`2023-09`** : **新增TransLab分割头，可以通过设置pp参数切换**
+
+TransLab是一款由仪酷智能科技有限公司开发的分割头，在这款分割头里面，我们将DeepLabv3基于传统卷积的空洞卷积 换成了基于Transformer的AIFI模块
+
+~~玩Transformer玩的~~
 
 **`2023-08`**:**在原作者基础上添加多个新款Backbone（HGNetv2,yolov8系列）**
 
@@ -46,7 +52,7 @@ BiliBili视频中的原仓库地址为：https://github.com/bubbliiiing/deeplabv
 | VOC12+SBD | [deeplab_mobilenetv2.pth](https://github.com/bubbliiiing/deeplabv3-plus-pytorch/releases/download/v1.0/deeplab_mobilenetv2.pth) | VOC-Val12 | 512x512 | 72.59 | 
 | VOC12+SBD |    [deeplab_xception.pth](https://github.com/bubbliiiing/deeplabv3-plus-pytorch/releases/download/v1.0/deeplab_xception.pth)    | VOC-Val12 | 512x512 | 76.95 | 
 | VOC12+SBD |                  [deeplab_hgnetv2.pth](http://dl.aiblockly.com:8145/pretrained-model/seg/deeplab_hgnetv2.pth)                   | VOC-Val12 | 512x512 | 78.83 |
-| VOC12+SBD |                  translab_hgnetv2.pth (稍后放出)                  | VOC-Val12 | 512x512 | 80.23 |
+| VOC12+SBD |                  [translab_hgnetv2.pth](https://github.com/VIRobotics/hgnetv2-deeplabv3/releases/download/v0.0.2-beta/hgnetv2l-translab-0.0.2b.pth)                 | VOC-Val12 | 512x512 | 80.23 |
 
 #### 目前该项目支持的主干网络有
 

@@ -3,12 +3,13 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from nets.modules.feature_decoder import TransEnc
-
+from nets.modules.block import C2f,C2TR
 
 class BaseLabHeader(nn.Module):
     def __init__(self, H, W, num_classes: int, low_f_ch: int, f_ch: int, downsample_factor=16, *args,
                  **kwargs):
         super().__init__()
+        use_c2f=kwargs.get("use_c2f",False)
         self.size = (H, W)
         self.shortcut_conv = nn.Sequential(
             nn.Conv2d(low_f_ch, 48, 1),
@@ -16,18 +17,30 @@ class BaseLabHeader(nn.Module):
             nn.ReLU(inplace=True)
         )
 
-        self.cat_conv = nn.Sequential(
-            nn.Conv2d(48 + 256, 256, 3, stride=1, padding=1),
-            nn.BatchNorm2d(256),
-            nn.ReLU(inplace=True),
-            nn.Dropout(0.5),
+        if use_c2f:
+            self.cat_conv = nn.Sequential(
+                C2f(48 + 256, 256, shortcut=True),
+                nn.SiLU(inplace=True),
+                nn.Dropout(0.5),
 
-            nn.Conv2d(256, 256, 3, stride=1, padding=1),
-            nn.BatchNorm2d(256),
-            nn.ReLU(inplace=True),
+                C2TR(256, 256, shortcut=True),
+                nn.SiLU(inplace=True),
+                nn.Dropout(0.1),
+            )
+        else:
+            self.cat_conv = nn.Sequential(
+                nn.Conv2d(48 + 256, 256, 3, stride=1, padding=1),
+                nn.BatchNorm2d(256),
+                nn.ReLU(inplace=True),
+                nn.Dropout(0.5),
 
-            nn.Dropout(0.1),
-        )
+                nn.Conv2d(256, 256, 3, stride=1, padding=1),
+                nn.BatchNorm2d(256),
+                nn.ReLU(inplace=True),
+
+                nn.Dropout(0.1),
+            )
+
         self.cls_conv = nn.Conv2d(256, num_classes, 1, stride=1)
 
 
@@ -45,3 +58,4 @@ class BaseLabHeader(nn.Module):
         x = self.cls_conv(x)
         x = F.interpolate(x, size=(H, W), mode='bilinear', align_corners=True)
         return x
+

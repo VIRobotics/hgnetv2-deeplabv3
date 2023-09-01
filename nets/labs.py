@@ -8,7 +8,7 @@ from nets.Head import aspp,transformer
 
 class Labs(nn.Module):
     def __init__(self, num_classes, backbone="mobilenet", pretrained=True, downsample_factor=16, header="aspp",
-                 img_sz=(512, 512)):
+                 img_sz=(512, 512),**kwargs):
         super(Labs, self).__init__()
         header=header.lower()
         mod = sys.modules[__name__]
@@ -26,7 +26,7 @@ class Labs(nn.Module):
             raise ValueError(f'Unsupported Head - `{header}`, Use {";".join(headlist)} .')
         headerfunc = getattr(mod, header)
         H, W = img_sz
-        self.header = headerfunc(H, W, num_classes, low_level_channels, in_channels)
+        self.header = headerfunc(H, W, num_classes, low_level_channels, in_channels,use_c2f=kwargs.get("use_c2f",False))
 
     def forward(self, x):
         # -----------------------------------------#

@@ -1,79 +1,14 @@
+from nets.modules import InvertedResidual,conv_bn,conv_1x1_bn
 import math
+import torch.utils.model_zoo as model_zoo
 import os
-
 import torch
 import torch.nn as nn
-import torch.utils.model_zoo as model_zoo
-
-BatchNorm2d = nn.BatchNorm2d
-
-def conv_bn(inp, oup, stride):
-    return nn.Sequential(
-        nn.Conv2d(inp, oup, 3, stride, 1, bias=False),
-        BatchNorm2d(oup),
-        nn.ReLU6(inplace=True)
-    )
-
-def conv_1x1_bn(inp, oup):
-    return nn.Sequential(
-        nn.Conv2d(inp, oup, 1, 1, 0, bias=False),
-        BatchNorm2d(oup),
-        nn.ReLU6(inplace=True)
-    )
-
-class InvertedResidual(nn.Module):
-    def __init__(self, inp, oup, stride, expand_ratio):
-        super(InvertedResidual, self).__init__()
-        self.stride = stride
-        assert stride in [1, 2]
-
-        hidden_dim = round(inp * expand_ratio)
-        self.use_res_connect = self.stride == 1 and inp == oup
-
-        if expand_ratio == 1:
-            self.conv = nn.Sequential(
-                #--------------------------------------------#
-                #   进行3x3的逐层卷积，进行跨特征点的特征提取
-                #--------------------------------------------#
-                nn.Conv2d(hidden_dim, hidden_dim, 3, stride, 1, groups=hidden_dim, bias=False),
-                BatchNorm2d(hidden_dim),
-                nn.ReLU6(inplace=True),
-                #-----------------------------------#
-                #   利用1x1卷积进行通道数的调整
-                #-----------------------------------#
-                nn.Conv2d(hidden_dim, oup, 1, 1, 0, bias=False),
-                BatchNorm2d(oup),
-            )
-        else:
-            self.conv = nn.Sequential(
-                #-----------------------------------#
-                #   利用1x1卷积进行通道数的上升
-                #-----------------------------------#
-                nn.Conv2d(inp, hidden_dim, 1, 1, 0, bias=False),
-                BatchNorm2d(hidden_dim),
-                nn.ReLU6(inplace=True),
-                #--------------------------------------------#
-                #   进行3x3的逐层卷积，进行跨特征点的特征提取
-                #--------------------------------------------#
-                nn.Conv2d(hidden_dim, hidden_dim, 3, stride, 1, groups=hidden_dim, bias=False),
-                BatchNorm2d(hidden_dim),
-                nn.ReLU6(inplace=True),
-                #-----------------------------------#
-                #   利用1x1卷积进行通道数的下降
-                #-----------------------------------#
-                nn.Conv2d(hidden_dim, oup, 1, 1, 0, bias=False),
-                BatchNorm2d(oup),
-            )
-
-    def forward(self, x):
-        if self.use_res_connect:
-            return x + self.conv(x)
-        else:
-            return self.conv(x)
-
-class MobileNetV2(nn.Module):
-    def __init__(self, n_class=1000, input_size=224, width_mult=1.):
-        super(MobileNetV2, self).__init__()
+from torch.nn import BatchNorm2d
+from PATH import WTS_STORAGE_DIR
+class MobileNetV2Base(nn.Module):
+    def __init__(self, n_class=1000, input_size=224, width_mult=1., *args, **kwargs):
+        super().__init__()
         block = InvertedResidual
         input_channel = 32
         last_channel = 1280
@@ -135,7 +70,7 @@ class MobileNetV2(nn.Module):
                 m.bias.data.zero_()
 
 
-def load_url(url, model_dir='./model_data', map_location=None):
+def load_url(url, model_dir=WTS_STORAGE_DIR, map_location=None):
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
     filename = url.split('/')[-1]
@@ -146,7 +81,7 @@ def load_url(url, model_dir='./model_data', map_location=None):
         return model_zoo.load_url(url,model_dir=model_dir)
 
 def gen_mobilenetv2(pretrained=False, **kwargs):
-    model = MobileNetV2(n_class=1000, **kwargs)
+    model = MobileNetV2Base(n_class=1000, **kwargs)
     kw = {}
     if not torch.cuda.is_available():
         device=torch.device('cpu')
@@ -155,7 +90,51 @@ def gen_mobilenetv2(pretrained=False, **kwargs):
         model.load_state_dict(load_url('https://github.com/bubbliiiing/deeplabv3-plus-pytorch/releases/download/v1.0/mobilenet_v2.pth.tar',**kw), strict=False)
     return model
 
-if __name__ == "__main__":
-    model = gen_mobilenetv2()
-    for i, layer in enumerate(model.features):
-        print(i, layer)
+class MobileNetV2(nn.Module):
+    def __init__(self, downsample_factor=8, pretrained=True):
+        super(MobileNetV2, self).__init__()
+        from functools import partial
+        self.low_ch=24
+        self.feature_ch=320
+        model = gen_mobilenetv2(pretrained)
+        self.features = model.features[:-1]
+
+        self.total_idx = len(self.features)
+        self.down_idx = [2, 4, 7, 14]
+
+        if downsample_factor == 8:
+            for i in range(self.down_idx[-2], self.down_idx[-1]):
+                self.features[i].apply(
+                    partial(self._nostride_dilate, dilate=2)
+                )
+            for i in range(self.down_idx[-1], self.total_idx):
+                self.features[i].apply(
+                    partial(self._nostride_dilate, dilate=4)
+                )
+        elif downsample_factor == 16:
+            for i in range(self.down_idx[-1], self.total_idx):
+                self.features[i].apply(
+                    partial(self._nostride_dilate, dilate=2)
+                )
+
+    def _nostride_dilate(self, m, dilate):
+        classname = m.__class__.__name__
+        if classname.find('Conv') != -1:
+            if m.stride == (2, 2):
+                m.stride = (1, 1)
+                if m.kernel_size == (3, 3):
+                    m.dilation = (dilate // 2, dilate // 2)
+                    m.padding = (dilate // 2, dilate // 2)
+            else:
+                if m.kernel_size == (3, 3):
+                    m.dilation = (dilate, dilate)
+                    m.padding = (dilate, dilate)
+
+    def forward(self, x):
+        low_level_features = self.features[:4](x)
+        x = self.features[4:](low_level_features)
+        return low_level_features, x
+
+
+def mobilenetv2(*args,**kwargs):
+    return MobileNetV2(*args,**kwargs)

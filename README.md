@@ -1,4 +1,4 @@
-## DeepLabv3+：Encoder-Decoder with Atrous Separable Convolution语义分割模型在Pytorch当中的实现
+## Torch版的TransLab和DeepLabv3+全家桶
 ---
 
 ### 目录
@@ -14,6 +14,12 @@
 9. [参考资料 Reference](#Reference)
 
 ## Top News
+
+**`2023-09`** : **新增TransLab分割头，可以通过设置pp参数切换**
+
+TransLab是一款由仪酷智能科技有限公司开发的分割头，在这款分割头里面，我们将DeepLabv3基于传统卷积的空洞卷积 换成了基于Transformer的AIFI模块
+
+~~玩Transformer玩的~~
 
 **`2023-08`**:**在原作者基础上添加多个新款Backbone（HGNetv2,yolov8系列）**
 
@@ -46,16 +52,23 @@ BiliBili视频中的原仓库地址为：https://github.com/bubbliiiing/deeplabv
 | VOC12+SBD | [deeplab_mobilenetv2.pth](https://github.com/bubbliiiing/deeplabv3-plus-pytorch/releases/download/v1.0/deeplab_mobilenetv2.pth) | VOC-Val12 | 512x512 | 72.59 | 
 | VOC12+SBD |    [deeplab_xception.pth](https://github.com/bubbliiiing/deeplabv3-plus-pytorch/releases/download/v1.0/deeplab_xception.pth)    | VOC-Val12 | 512x512 | 76.95 | 
 | VOC12+SBD |                  [deeplab_hgnetv2.pth](http://dl.aiblockly.com:8145/pretrained-model/seg/deeplab_hgnetv2.pth)                   | VOC-Val12 | 512x512 | 78.83 |
+| VOC12+SBD |                  [translab_hgnetv2.pth](https://github.com/VIRobotics/hgnetv2-deeplabv3/releases/download/v0.0.2-beta/hgnetv2l-translab-0.0.2b.pth)                 | VOC-Val12 | 512x512 | 80.23 |
 
-目前该项目支持的主干网络有
+#### 目前该项目支持的主干网络有
 
-MobileNetv2 XCeption HGNetv2(HGNet来自百度PP,引用ultralytics模型库和预训练权重，仪酷智能接入deeplab)，
+MobileNetv2 MobileNetv3 XCeption HGNetv2(HGNet由百度开发,引用ultralytics模型库和预训练权重，仪酷智能接入deeplab)，
 
 YOLOv8(S和M尺寸，目前存在低mIOU的问题，不推荐)
 
-##### TODO
+#### 目前该项目支持的分割头有
 
-增加MobileNetv3 small和large主干
+官方Deeplabv3+的头（采用ASPP)
+
+仪酷智能科技的TransLab头(采用AIFI Transformer) 
+
+您可以自由的组合主干和分割头
+
+
 
 ### 所需环境
 
@@ -78,7 +91,7 @@ VOC拓展数据集的百度网盘如下：
 #### a、训练voc数据集
 
 1、将我提供的voc数据集放入VOCdevkit中（无需运行voc_annotation.py）。  
-2、在train.py中设置对应参数，默认参数已经对应voc数据集所需要的参数了，所以只要修改backbone和model_path即可。  
+2、在train.py中设置对应参数，默认参数已经对应voc数据集所需要的参数了，所以只要修改backbone,pp,和model_path即可。  
 3、运行train.py进行训练。
 
 #### b、训练自己的数据集
@@ -144,6 +157,9 @@ _defaults = {
     #   没有GPU可以设置成False
     # -------------------------------#
     "cuda": True,
+    # -------------------------------#
+    #   使用何种头部 transformer代表使用TransLab 使用ASPP代表使用原版
+    "pp":"transformer"
 }
 ```
 

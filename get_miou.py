@@ -3,7 +3,7 @@ import os
 from PIL import Image
 from tqdm import tqdm
 
-from deeplab import DeeplabV3
+from AllLabs import DeeplabV3
 from utils.utils_metrics import compute_mIoU, show_results
 
 '''
@@ -26,6 +26,10 @@ if __name__ == "__main__":
     #--------------------------------------------#
     #   区分的种类，和json_to_dataset里面的一样
     #--------------------------------------------#
+
+    backbone = "hgnetv2l"
+
+    pp = "transformer"
     name_classes    = ["background","aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike", "person", "pottedplant", "sheep", "sofa", "train", "tvmonitor"]
     # name_classes    = ["_background_","cat","dog"]
     #-------------------------------------------------------#
@@ -33,7 +37,7 @@ if __name__ == "__main__":
     #   默认指向根目录下的VOC数据集
     #-------------------------------------------------------#
     VOCdevkit_path  = 'VOCdevkit'
-
+    model_path="logs/best_epoch_weights.pth"
     image_ids       = open(os.path.join(VOCdevkit_path, "VOC2007/ImageSets/Segmentation/val.txt"),'r').read().splitlines() 
     gt_dir          = os.path.join(VOCdevkit_path, "VOC2007/SegmentationClass/")
     miou_out_path   = "miou_out"
@@ -44,7 +48,8 @@ if __name__ == "__main__":
             os.makedirs(pred_dir)
             
         print("Load model.")
-        deeplab = DeeplabV3()
+        deeplab = DeeplabV3(num_classes=num_classes, backbone=backbone,model_path=model_path
+                    ,pp=pp)
         print("Load model done.")
 
         print("Get predict result.")

@@ -14,7 +14,7 @@ import numpy as np
 
 from PIL import Image
 from tqdm import tqdm
-from torch.utils.tensorboard import SummaryWriter
+#from torch.utils.tensorboard import SummaryWriter
 from .utils import cvtColor, preprocess_input, resize_image
 from .utils_metrics import compute_mIoU
 
@@ -26,10 +26,10 @@ class LossHistory():
         self.val_loss   = []
         
         os.makedirs(self.log_dir)
-        self.writer     = SummaryWriter(self.log_dir)
+        #self.writer     = SummaryWriter(self.log_dir)
         try:
             dummy_input     = torch.randn(2, 3, input_shape[0], input_shape[1])
-            self.writer.add_graph(model, dummy_input)
+            #self.writer.add_graph(model, dummy_input)
         except:
             pass
 
@@ -47,8 +47,8 @@ class LossHistory():
             f.write(str(val_loss))
             f.write("\n")
 
-        self.writer.add_scalar('loss', loss, epoch)
-        self.writer.add_scalar('val_loss', val_loss, epoch)
+        # self.writer.add_scalar('loss', loss, epoch)
+        # self.writer.add_scalar('val_loss', val_loss, epoch)
         self.loss_plot()
 
     def loss_plot(self):

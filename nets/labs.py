@@ -25,6 +25,7 @@ class Labs(nn.Module):
         if (header not in headlist) and hasattr(mod, header):
             raise ValueError(f'Unsupported Head - `{header}`, Use {";".join(headlist)} .')
         headerfunc = getattr(mod, header)
+        print(f"{header} selected")
         H, W = img_sz
         self.header = headerfunc(H, W, num_classes, low_level_channels, in_channels,use_c2f=kwargs.get("use_c2f",False))
 

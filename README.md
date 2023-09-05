@@ -52,11 +52,11 @@ BiliBili视频中的原仓库地址为：https://github.com/bubbliiiing/deeplabv
 | VOC12+SBD | [deeplab_mobilenetv2.pth](https://github.com/bubbliiiing/deeplabv3-plus-pytorch/releases/download/v1.0/deeplab_mobilenetv2.pth) | VOC-Val12 | 512x512 | 72.59 | 
 | VOC12+SBD |    [deeplab_xception.pth](https://github.com/bubbliiiing/deeplabv3-plus-pytorch/releases/download/v1.0/deeplab_xception.pth)    | VOC-Val12 | 512x512 | 76.95 | 
 | VOC12+SBD |                  [deeplab_hgnetv2.pth](http://dl.aiblockly.com:8145/pretrained-model/seg/deeplab_hgnetv2.pth)                   | VOC-Val12 | 512x512 | 78.83 |
-| VOC12+SBD |                  [translab_hgnetv2.pth](https://github.com/VIRobotics/hgnetv2-deeplabv3/releases/download/v0.0.2-beta/hgnetv2l-translab-0.0.2b.pth)                 | VOC-Val12 | 512x512 | 80.23 |
+| VOC12+SBD |                  [translab_hgnetv2.pth](https://github.com/VIRobotics/hgnetv2-deeplabv3/releases/tag/v0.0.2-beta)                 | VOC-Val12 | 512x512 | 80.23 |
 
 #### 目前该项目支持的主干网络有
 
-MobileNetv2 MobileNetv3 XCeption HGNetv2(HGNet由百度开发,引用ultralytics模型库和预训练权重，仪酷智能接入deeplab)，
+MobileNetv2 MobileNetv3 XCeption HGNetv2(HGNet由百度开发，仪酷智能接入deeplab)，
 
 YOLOv8(S和M尺寸，目前存在低mIOU的问题，不推荐)
 

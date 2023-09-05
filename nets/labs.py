@@ -2,8 +2,12 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import sys
-from nets.BackBone import mobilenetv3s, mobilenetv3l, hgnetv2l, hgnetv2x, yolov8m, yolov8s, xception, mobilenetv2
+from nets.BackBone import mobilenetv3s, mobilenetv3l, hgnetv2l, hgnetv2x, xception, mobilenetv2
 from nets.Head import aspp,transformer
+try:
+    from nets.BackBone import yolov8m, yolov8s
+except ImportError:
+    print("Use YOLOv8 Backbone need run pip install ultralytics==8.0.154")
 
 
 class Labs(nn.Module):

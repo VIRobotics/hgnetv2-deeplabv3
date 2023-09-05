@@ -56,7 +56,7 @@ BiliBili视频中的原仓库地址为：https://github.com/bubbliiiing/deeplabv
 
 #### 目前该项目支持的主干网络有
 
-MobileNetv2 MobileNetv3 XCeption HGNetv2(HGNet由百度开发,引用ultralytics模型库和预训练权重，仪酷智能接入deeplab)，
+MobileNetv2 MobileNetv3 XCeption HGNetv2(HGNet由百度开发，仪酷智能接入deeplab)，
 
 YOLOv8(S和M尺寸，目前存在低mIOU的问题，不推荐)
 

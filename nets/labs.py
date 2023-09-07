@@ -14,6 +14,11 @@ class Labs(nn.Module):
     def __init__(self, num_classes, backbone="mobilenet", pretrained=True, downsample_factor=16, header="aspp",
                  img_sz=(512, 512),**kwargs):
         super(Labs, self).__init__()
+        self.warp=None
+        if backbone=="u2":
+            from nets.third_party import U2NET
+            self.warp=U2NET(out_ch=num_classes)
+            return
         header=header.lower()
         mod = sys.modules[__name__]
         backbone_list = ["mobilenetv2", "mobilenetv3s", "mobilenetv3l",
@@ -35,7 +40,10 @@ class Labs(nn.Module):
 
     def forward(self, x):
         # -----------------------------------------#
-        low_level_features, x = self.backbone(x)
+        if None is self.warp:
+            low_level_features, x = self.backbone(x)
         # print(low_level_features.shape, x.shape)
-        x = self.header(low_level_features, x)
+            x = self.header(low_level_features, x)
+        elif isinstance(self.warp,nn.Module):
+            x=self.warp(x)
         return x

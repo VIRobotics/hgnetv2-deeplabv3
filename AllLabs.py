@@ -111,7 +111,7 @@ class DeeplabV3(object):
         #   载入模型与权值
         # -------------------------------#
         self.net = Labs(num_classes=self.num_classes, backbone=self.backbone,
-                           downsample_factor=self.downsample_factor, pretrained=True,header=self.pp)
+                           downsample_factor=self.downsample_factor, pretrained=True,header=self.pp,img_sz=self.input_shape)
 
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.net.load_state_dict(torch.load(self.model_path, map_location=device))
@@ -297,17 +297,34 @@ class DeeplabV3(object):
         import onnx
         self.generate(onnx=True)
 
-        im = torch.zeros(1, 3, *self.input_shape).to('cpu')  # image size(1, 3, 512, 512) BCHW
+        im = torch.zeros(1, *self.input_shape, 3).to('cpu')  # image size(1, 3, 512, 512) BCHW
         input_layer_names = ["images"]
         output_layer_names = ["output"]
 
+        class Net_with_post(nn.Module):
+            def __init__(self, m):
+                super().__init__()
+                self.m = m
+
+            def forward(self, x):
+                x = x.permute(0, 3, 1, 2)
+                x = x / 255.0
+                pr = self.m(x)
+                pr = F.softmax(pr.permute(0, 2, 3, 1), dim=-1)
+                pr=torch.argmax(pr,-1)
+                return pr
+
+        net = Net_with_post(self.net)
+
+        
+
         # Export the model
         print(f'Starting export with onnx {onnx.__version__}.')
-        torch.onnx.export(self.net,
+        torch.onnx.export(net,
                           im,
                           f=model_path,
                           verbose=False,
-                          opset_version=12,
+                          opset_version=15,
                           training=torch.onnx.TrainingMode.EVAL,
                           do_constant_folding=True,
                           input_names=input_layer_names,

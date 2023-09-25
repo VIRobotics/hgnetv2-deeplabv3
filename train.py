@@ -41,7 +41,7 @@ if __name__ == "__main__":
     #   Cuda    是否使用Cuda
     #           没有GPU可以设置成False
     # ---------------------------------#
-    Cuda = True
+    cuda = True
     # ---------------------------------------------------------------------#
     #   distributed     用于指定是否使用单机多卡分布式运行
     #                   终端指令仅支持Ubuntu。CUDA_VISIBLE_DEVICES用于在Ubuntu下指定显卡。
@@ -62,10 +62,10 @@ if __name__ == "__main__":
     #   fp16        是否使用混合精度训练
     #               可减少约一半的显存、需要pytorch1.7.1以上
     # ---------------------------------------------------------------------#
-    if Cuda and torch.cuda.is_available():
+    if cuda and torch.cuda.is_available():
         fp16 = check_amp()
     else:
-        fp16=False
+        fp16 = False
     # -----------------------------------------------------#
     #   num_classes     训练自己的数据集必须要修改的
     #                   自己需要的分类个数+1，如2+1
@@ -79,8 +79,8 @@ if __name__ == "__main__":
     #   yolov8s | yolov8m
     # ---------------------------------#
     backbone = "hgnetv2l"
-    pp="transformer"
-    #pp="ASPP"
+    pp = "transformer"
+    # pp="ASPP"
     # ----------------------------------------------------------------------------------------------------------------------------#
     #   pretrained      是否使用主干网络的预训练权重，此处使用的是主干的权重，因此是在模型构建的时候进行加载的。
     #                   如果设置了model_path，则主干的权值无需加载，pretrained的值无意义。
@@ -159,9 +159,9 @@ if __name__ == "__main__":
     #   Freeze_batch_size   模型冻结训练的batch_size
     #                       (当Freeze_Train=False时失效)
     # ------------------------------------------------------------------#
-    Init_Epoch = 0
-    Freeze_Epoch = 75
-    Freeze_batch_size = 10
+    init_epoch = 0
+    freeze_epoch = 75
+    freeze_batch_size = 10
     # ------------------------------------------------------------------#
     #   解冻阶段训练参数
     #   此时模型的主干不被冻结了，特征提取网络会发生改变
@@ -169,13 +169,17 @@ if __name__ == "__main__":
     #   UnFreeze_Epoch          模型总共训练的epoch
     #   Unfreeze_batch_size     模型在解冻后的batch_size
     # ------------------------------------------------------------------#
-    UnFreeze_Epoch = 100
-    Unfreeze_batch_size = 8
+    unfreeze_epoch = 100
+    unfreeze_batch_size = 8
     # ------------------------------------------------------------------#
     #   Freeze_Train    是否进行冻结训练
     #                   默认先冻结主干训练后解冻训练。
     # ------------------------------------------------------------------#
-    Freeze_Train = True
+    freeze_Train = True
+
+    #数据增强
+    aug_blur=True
+    aug_hsv=False
 
     # ------------------------------------------------------------------#
     #   其它训练参数：学习率、优化器、学习率下降有关
@@ -281,9 +285,8 @@ if __name__ == "__main__":
         else:
             download_weights(backbone)
 
-
     model = Labs(num_classes=num_classes, backbone=backbone, downsample_factor=downsample_factor,
-                    pretrained=pretrained, header=pp)
+                 pretrained=pretrained, header=pp)
     if not pretrained:
         weights_init(model)
     if model_path != '':
@@ -345,7 +348,7 @@ if __name__ == "__main__":
     elif sync_bn:
         print("Sync_bn is not support in one gpu or not distributed.")
 
-    if Cuda:
+    if cuda:
         if distributed:
             # ----------------------------#
             #   多卡平行运行
@@ -370,11 +373,11 @@ if __name__ == "__main__":
 
     if local_rank == 0:
         show_config(
-            num_classes=num_classes, backbone=backbone, model_path=model_path, input_shape=input_shape, \
-            Init_Epoch=Init_Epoch, Freeze_Epoch=Freeze_Epoch, UnFreeze_Epoch=UnFreeze_Epoch,
-            Freeze_batch_size=Freeze_batch_size, Unfreeze_batch_size=Unfreeze_batch_size, Freeze_Train=Freeze_Train, \
+            num_classes=num_classes, backbone=backbone, model_path=model_path, input_shape=input_shape,
+            Init_Epoch=init_epoch, Freeze_Epoch=freeze_epoch, UnFreeze_Epoch=unfreeze_epoch,
+            Freeze_batch_size=freeze_batch_size, Unfreeze_batch_size=unfreeze_batch_size, Freeze_Train=freeze_Train,
             Init_lr=Init_lr, Min_lr=Min_lr, optimizer_type=optimizer_type, momentum=momentum,
-            lr_decay_type=lr_decay_type, \
+            lr_decay_type=lr_decay_type,
             save_period=save_period, save_dir=save_dir, num_workers=num_workers, num_train=num_train, num_val=num_val
         )
         # ---------------------------------------------------------#
@@ -384,18 +387,18 @@ if __name__ == "__main__":
         #   此处仅建议最低训练世代，上不封顶，计算时只考虑了解冻部分
         # ----------------------------------------------------------#
         wanted_step = 1.5e4 if optimizer_type == "sgd" else 0.5e4
-        total_step = num_train // Unfreeze_batch_size * UnFreeze_Epoch
+        total_step = num_train // unfreeze_batch_size * unfreeze_epoch
         if total_step <= wanted_step:
-            if num_train // Unfreeze_batch_size == 0:
+            if num_train // unfreeze_batch_size == 0:
                 raise ValueError('数据集过小，无法进行训练，请扩充数据集。')
-            wanted_epoch = wanted_step // (num_train // Unfreeze_batch_size) + 1
+            wanted_epoch = wanted_step // (num_train // unfreeze_batch_size) + 1
             print("\n\033[1;33;44m[Warning] 使用%s优化器时，建议将训练总步长设置到%d以上。\033[0m" % (
-            optimizer_type, wanted_step))
+                optimizer_type, wanted_step))
             print(
                 "\033[1;33;44m[Warning] 本次运行的总训练数据量为%d，Unfreeze_batch_size为%d，共训练%d个Epoch，计算出总训练步长为%d。\033[0m" % (
-                num_train, Unfreeze_batch_size, UnFreeze_Epoch, total_step))
+                    num_train, unfreeze_batch_size, unfreeze_epoch, total_step))
             print("\033[1;33;44m[Warning] 由于总训练步长为%d，小于建议总步长%d，建议设置总世代为%d。\033[0m" % (
-            total_step, wanted_step, wanted_epoch))
+                total_step, wanted_step, wanted_epoch))
 
     # ------------------------------------------------------#
     #   主干特征提取网络特征通用，冻结训练可以加快训练速度
@@ -410,14 +413,14 @@ if __name__ == "__main__":
         # ------------------------------------#
         #   冻结一定部分训练
         # ------------------------------------#
-        if Freeze_Train:
+        if freeze_Train:
             for param in model.backbone.parameters():
                 param.requires_grad = False
 
         # -------------------------------------------------------------------#
         #   如果不冻结训练的话，直接设置batch_size为Unfreeze_batch_size
         # -------------------------------------------------------------------#
-        batch_size = Freeze_batch_size if Freeze_Train else Unfreeze_batch_size
+        batch_size = freeze_batch_size if freeze_Train else unfreeze_batch_size
 
         # -------------------------------------------------------------------#
         #   判断当前batch_size，自适应调整学习率
@@ -443,7 +446,7 @@ if __name__ == "__main__":
         # ---------------------------------------#
         #   获得学习率下降的公式
         # ---------------------------------------#
-        lr_scheduler_func = get_lr_scheduler(lr_decay_type, Init_lr_fit, Min_lr_fit, UnFreeze_Epoch)
+        lr_scheduler_func = get_lr_scheduler(lr_decay_type, Init_lr_fit, Min_lr_fit, unfreeze_epoch)
 
         # ---------------------------------------#
         #   判断每一个世代的长度
@@ -456,6 +459,10 @@ if __name__ == "__main__":
 
         train_dataset = DeeplabDataset(train_lines, input_shape, num_classes, True, VOCdevkit_path)
         val_dataset = DeeplabDataset(val_lines, input_shape, num_classes, False, VOCdevkit_path)
+        if not aug_blur:
+            train_dataset.blur=None
+        if not aug_hsv:
+            train_dataset.hsv_jitter=None
 
         if distributed:
             train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset, shuffle=True, )
@@ -478,7 +485,7 @@ if __name__ == "__main__":
         #   记录eval的map曲线
         # ----------------------#
         if local_rank == 0:
-            eval_callback = EvalCallback(model, input_shape, num_classes, val_lines, VOCdevkit_path, log_dir, Cuda, \
+            eval_callback = EvalCallback(model, input_shape, num_classes, val_lines, VOCdevkit_path, log_dir, cuda, \
                                          eval_flag=eval_flag, period=eval_period)
         else:
             eval_callback = None
@@ -486,13 +493,13 @@ if __name__ == "__main__":
         # ---------------------------------------#
         #   开始模型训练
         # ---------------------------------------#
-        for epoch in range(Init_Epoch, UnFreeze_Epoch):
+        for epoch in range(init_epoch, unfreeze_epoch):
             # ---------------------------------------#
             #   如果模型有冻结学习部分
             #   则解冻，并设置参数
             # ---------------------------------------#
-            if epoch >= Freeze_Epoch and not UnFreeze_flag and Freeze_Train:
-                batch_size = Unfreeze_batch_size
+            if epoch >= freeze_epoch and not UnFreeze_flag and freeze_Train:
+                batch_size = unfreeze_batch_size
 
                 # -------------------------------------------------------------------#
                 #   判断当前batch_size，自适应调整学习率
@@ -508,7 +515,7 @@ if __name__ == "__main__":
                 # ---------------------------------------#
                 #   获得学习率下降的公式
                 # ---------------------------------------#
-                lr_scheduler_func = get_lr_scheduler(lr_decay_type, Init_lr_fit, Min_lr_fit, UnFreeze_Epoch)
+                lr_scheduler_func = get_lr_scheduler(lr_decay_type, Init_lr_fit, Min_lr_fit, unfreeze_epoch)
 
                 for param in model.backbone.parameters():
                     param.requires_grad = True
@@ -537,11 +544,11 @@ if __name__ == "__main__":
             set_optimizer_lr(optimizer, lr_scheduler_func, epoch)
 
             fit_one_epoch(model_train, model, loss_history, eval_callback, optimizer, epoch,
-                          epoch_step, epoch_step_val, gen, gen_val, UnFreeze_Epoch, Cuda, dice_loss, focal_loss,
+                          epoch_step, epoch_step_val, gen, gen_val, unfreeze_epoch, cuda, dice_loss, focal_loss,
                           cls_weights, num_classes, fp16, scaler, save_period, save_dir, local_rank)
 
             if distributed:
                 dist.barrier()
 
         if local_rank == 0:
-            loss_history.writer.close()
+            pass

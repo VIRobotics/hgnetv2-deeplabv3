@@ -36,7 +36,51 @@ from utils.utils_fit import fit_one_epoch
 3、训练好的权值文件保存在logs文件夹中，每个训练世代（Epoch）包含若干训练步长（Step），每个训练步长（Step）进行一次梯度下降。
    如果只是训练了几个Step是不会保存的，Epoch和Step的概念要捋清楚一下。
 '''
+
+import configparser
+import argparse
+import sys,os
+sys.path.append(os.getcwd())
+
+
+
+
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-c', '--config',default="config.ini")
+    config = configparser.ConfigParser()
+    args = parser.parse_args()
+    if os.path.exists(args.config):
+        config.read(args.config)
+    else:
+        config["base"]={}
+        config["advance"] = {}
+    CONFIG_DIR=os.path.dirname(os.path.abspath(args.config))
+    FROZEN_BATCH_SIZE = config["base"].getint("frozen_batch-size",10)
+    FROZEN_EPOCH = config["base"].getint("frozen_epoch",75)
+    UNFROZEN_BATCH_SIZE = config["base"].getint("unfrozen_batch-size",6)
+    UNFROZEN_EPOCH = config["base"].getint("unfrozen_epoch",100)
+    IMGSZ= config["base"].getint("image_size",512)
+    DATASET_PATH = config["base"].get("dataset_path", 'VOCdevkit')
+    if not os.path.isabs(DATASET_PATH):
+        DATASET_PATH = os.path.join(CONFIG_DIR,DATASET_PATH)
+    SAVE_PATH = os.path.join(CONFIG_DIR,config["base"].get("save_path"))
+    if not os.path.isabs(SAVE_PATH):
+        SAVE_PATH=os.path.join(CONFIG_DIR,SAVE_PATH)
+    BACKBONE = config["base"].get("backbone","hgnetv2l")
+    NUM_CLASSES = config["base"].getint("num_classes",21)
+    PP = config["base"].get("header", "transformer")
+
+    if "advance" not in config:
+        config["advance"] = {}
+    INIT_LR = config["advance"].getfloat("init_lr",7e-3)
+    MIN_LR_MULTIPLY = config["advance"].getfloat("min_lr_mutliply",0.01)
+    DOWNSAMPLE_FACTOR = config["advance"].getint("downsample_factor",16)
+    DICE_LOSS= config["advance"].getboolean("dice_loss",True)
+    FOCAL_LOSS = config["advance"].getboolean("focal_loss", False)
+    #focal_loss
+
+
     # ---------------------------------#
     #   Cuda    是否使用Cuda
     #           没有GPU可以设置成False
@@ -70,7 +114,7 @@ if __name__ == "__main__":
     #   num_classes     训练自己的数据集必须要修改的
     #                   自己需要的分类个数+1，如2+1
     # -----------------------------------------------------#
-    num_classes = 21
+    num_classes = NUM_CLASSES
     # ---------------------------------#
     #   所使用的的主干网络：
     #   mobilenet
@@ -78,8 +122,8 @@ if __name__ == "__main__":
     #   hg
     #   yolov8s | yolov8m
     # ---------------------------------#
-    backbone = "hgnetv2l"
-    pp = "transformer"
+    backbone = BACKBONE
+    pp = PP
     # pp="ASPP"
     # ----------------------------------------------------------------------------------------------------------------------------#
     #   pretrained      是否使用主干网络的预训练权重，此处使用的是主干的权重，因此是在模型构建的时候进行加载的。
@@ -112,11 +156,11 @@ if __name__ == "__main__":
     #                       8下采样的倍数较小、理论上效果更好。
     #                       但也要求更大的显存
     # ---------------------------------------------------------#
-    downsample_factor = 16
+    downsample_factor = DOWNSAMPLE_FACTOR
     # ------------------------------#
     #   输入图片的大小
     # ------------------------------#
-    input_shape = [512, 512]
+    input_shape = [IMGSZ, IMGSZ]
 
     # ----------------------------------------------------------------------------------------------------------------------------#
     #   训练分为两个阶段，分别是冻结阶段和解冻阶段。设置冻结阶段是为了满足机器性能不足的同学的训练需求。
@@ -160,8 +204,8 @@ if __name__ == "__main__":
     #                       (当Freeze_Train=False时失效)
     # ------------------------------------------------------------------#
     init_epoch = 0
-    freeze_epoch = 75
-    freeze_batch_size = 10
+    freeze_epoch = FROZEN_EPOCH
+    freeze_batch_size = FROZEN_BATCH_SIZE
     # ------------------------------------------------------------------#
     #   解冻阶段训练参数
     #   此时模型的主干不被冻结了，特征提取网络会发生改变
@@ -169,8 +213,8 @@ if __name__ == "__main__":
     #   UnFreeze_Epoch          模型总共训练的epoch
     #   Unfreeze_batch_size     模型在解冻后的batch_size
     # ------------------------------------------------------------------#
-    unfreeze_epoch = 100
-    unfreeze_batch_size = 8
+    unfreeze_epoch = UNFROZEN_EPOCH
+    unfreeze_batch_size = UNFROZEN_BATCH_SIZE
     # ------------------------------------------------------------------#
     #   Freeze_Train    是否进行冻结训练
     #                   默认先冻结主干训练后解冻训练。
@@ -190,8 +234,8 @@ if __name__ == "__main__":
     #                   当使用SGD优化器时建议设置   Init_lr=7e-3
     #   Min_lr          模型的最小学习率，默认为最大学习率的0.01
     # ------------------------------------------------------------------#
-    Init_lr = 7e-3
-    Min_lr = Init_lr * 0.01
+    Init_lr = INIT_LR
+    Min_lr = Init_lr * MIN_LR_MULTIPLY
     # ------------------------------------------------------------------#
     #   optimizer_type  使用到的优化器种类，可选的有adam、sgd
     #                   当使用Adam优化器时建议设置  Init_lr=5e-4
@@ -214,7 +258,7 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------#
     #   save_dir        权值与日志文件保存的文件夹
     # ------------------------------------------------------------------#
-    save_dir = 'logs'
+    save_dir = SAVE_PATH
     # ------------------------------------------------------------------#
     #   eval_flag       是否在训练时进行评估，评估对象为验证集
     #   eval_period     代表多少个epoch评估一次，不建议频繁的评估
@@ -229,14 +273,14 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------#
     #   VOCdevkit_path  数据集路径
     # ------------------------------------------------------------------#
-    VOCdevkit_path = 'VOCdevkit'
+    VOCdevkit_path = DATASET_PATH
     # ------------------------------------------------------------------#
     #   建议选项：
     #   种类少（几类）时，设置为True
     #   种类多（十几类）时，如果batch_size比较大（10以上），那么设置为True
     #   种类多（十几类）时，如果batch_size比较小（10以下），那么设置为False
     # ------------------------------------------------------------------#
-    dice_loss = True
+    dice_loss = DICE_LOSS
     # ------------------------------------------------------------------#
     #   是否使用focal loss来防止正负样本不平衡
     # ------------------------------------------------------------------#

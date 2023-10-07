@@ -58,19 +58,26 @@ def show_config(**kwargs):
 
 def download_weights(backbone, model_dir="./model_data"):
     import os
+    from utils.download import download_from_url,IntegrityError
     from torch.hub import load_state_dict_from_url
 
     download_urls = {
-        'mobilenet': 'https://github.com/bubbliiiing/deeplabv3-plus-pytorch/releases/download/v1.0/mobilenet_v2.pth.tar',
-        'xception': 'https://github.com/bubbliiiing/deeplabv3-plus-pytorch/releases/download/v1.0/xception_pytorch_imagenet.pth',
-        'hgnetv2l': 'https://github.com/VIRobotics/hgnetv2-deeplabv3/releases/download/v0.0.2-beta/hgnetv2l.pt',
-        "hgnetv2x": "https://github.com/VIRobotics/hgnetv2-deeplabv3/releases/download/v0.0.2-beta/hgnetv2x.pt",
-        "yolov8s": "https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8s-cls.pt",
-        "yolov8m": "https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8m-cls.pt",
+        'mobilenet': ['https://github.com/bubbliiiing/deeplabv3-plus-pytorch/releases/download/v1.0/mobilenet_v2.pth.tar'],
+        'xception': ['https://github.com/bubbliiiing/deeplabv3-plus-pytorch/releases/download/v1.0/xception_pytorch_imagenet.pth'],
+        'hgnetv2l': ['https://github.com/VIRobotics/hgnetv2-deeplabv3/releases/download/v0.0.2-beta/hgnetv2l.pt'],
+        "hgnetv2x": ["https://github.com/VIRobotics/hgnetv2-deeplabv3/releases/download/v0.0.2-beta/hgnetv2x.pt"],
+        "yolov8s": ["https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8s-cls.pt"],
+        "yolov8m": ["https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8m-cls.pt"],
 
     }
-    url = download_urls[backbone]
+    urls = download_urls[backbone]
 
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
-    load_state_dict_from_url(url, model_dir)
+
+    for url in urls:
+        try:
+            download_from_url(url, model_dir)
+            break
+        except IntegrityError:
+            UserWarning("下载失败，重试")

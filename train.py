@@ -110,21 +110,9 @@ if __name__ == "__main__":
         fp16 = check_amp()
     else:
         fp16 = False
-    # -----------------------------------------------------#
-    #   num_classes     训练自己的数据集必须要修改的
-    #                   自己需要的分类个数+1，如2+1
-    # -----------------------------------------------------#
     num_classes = NUM_CLASSES
-    # ---------------------------------#
-    #   所使用的的主干网络：
-    #   mobilenet
-    #   xception
-    #   hg
-    #   yolov8s | yolov8m
-    # ---------------------------------#
     backbone = BACKBONE
     pp = PP
-    # pp="ASPP"
     # ----------------------------------------------------------------------------------------------------------------------------#
     #   pretrained      是否使用主干网络的预训练权重，此处使用的是主干的权重，因此是在模型构建的时候进行加载的。
     #                   如果设置了model_path，则主干的权值无需加载，pretrained的值无意义。
@@ -151,58 +139,11 @@ if __name__ == "__main__":
     #   如果一定要从0开始，可以了解imagenet数据集，首先训练分类模型，获得网络的主干部分权值，分类模型的 主干部分 和该模型通用，基于此进行训练。
     # ----------------------------------------------------------------------------------------------------------------------------#
     model_path = ""
-    # ---------------------------------------------------------#
-    #   downsample_factor   下采样的倍数8、16 
-    #                       8下采样的倍数较小、理论上效果更好。
-    #                       但也要求更大的显存
-    # ---------------------------------------------------------#
+
     downsample_factor = DOWNSAMPLE_FACTOR
-    # ------------------------------#
-    #   输入图片的大小
-    # ------------------------------#
     input_shape = [IMGSZ, IMGSZ]
 
-    # ----------------------------------------------------------------------------------------------------------------------------#
-    #   训练分为两个阶段，分别是冻结阶段和解冻阶段。设置冻结阶段是为了满足机器性能不足的同学的训练需求。
-    #   冻结训练需要的显存较小，显卡非常差的情况下，可设置Freeze_Epoch等于UnFreeze_Epoch，此时仅仅进行冻结训练。
-    #      
-    #   在此提供若干参数设置建议，各位训练者根据自己的需求进行灵活调整：
-    #   （一）从整个模型的预训练权重开始训练： 
-    #       Adam：
-    #           Init_Epoch = 0，Freeze_Epoch = 50，UnFreeze_Epoch = 100，Freeze_Train = True，optimizer_type = 'adam'，Init_lr = 5e-4，weight_decay = 0。（冻结）
-    #           Init_Epoch = 0，UnFreeze_Epoch = 100，Freeze_Train = False，optimizer_type = 'adam'，Init_lr = 5e-4，weight_decay = 0。（不冻结）
-    #       SGD：
-    #           Init_Epoch = 0，Freeze_Epoch = 50，UnFreeze_Epoch = 100，Freeze_Train = True，optimizer_type = 'sgd'，Init_lr = 7e-3，weight_decay = 1e-4。（冻结）
-    #           Init_Epoch = 0，UnFreeze_Epoch = 100，Freeze_Train = False，optimizer_type = 'sgd'，Init_lr = 7e-3，weight_decay = 1e-4。（不冻结）
-    #       其中：UnFreeze_Epoch可以在100-300之间调整。
-    #   （二）从主干网络的预训练权重开始训练：
-    #       Adam：
-    #           Init_Epoch = 0，Freeze_Epoch = 50，UnFreeze_Epoch = 100，Freeze_Train = True，optimizer_type = 'adam'，Init_lr = 5e-4，weight_decay = 0。（冻结）
-    #           Init_Epoch = 0，UnFreeze_Epoch = 100，Freeze_Train = False，optimizer_type = 'adam'，Init_lr = 5e-4，weight_decay = 0。（不冻结）
-    #       SGD：
-    #           Init_Epoch = 0，Freeze_Epoch = 50，UnFreeze_Epoch = 120，Freeze_Train = True，optimizer_type = 'sgd'，Init_lr = 7e-3，weight_decay = 1e-4。（冻结）
-    #           Init_Epoch = 0，UnFreeze_Epoch = 120，Freeze_Train = False，optimizer_type = 'sgd'，Init_lr = 7e-3，weight_decay = 1e-4。（不冻结）
-    #       其中：由于从主干网络的预训练权重开始训练，主干的权值不一定适合语义分割，需要更多的训练跳出局部最优解。
-    #             UnFreeze_Epoch可以在120-300之间调整。
-    #             Adam相较于SGD收敛的快一些。因此UnFreeze_Epoch理论上可以小一点，但依然推荐更多的Epoch。
-    #   （三）batch_size的设置：
-    #       在显卡能够接受的范围内，以大为好。显存不足与数据集大小无关，提示显存不足（OOM或者CUDA out of memory）请调小batch_size。
-    #       受到BatchNorm层影响，batch_size最小为2，不能为1。
-    #       正常情况下Freeze_batch_size建议为Unfreeze_batch_size的1-2倍。不建议设置的差距过大，因为关系到学习率的自动调整。
-    # ----------------------------------------------------------------------------------------------------------------------------#
-    # ------------------------------------------------------------------#
-    #   冻结阶段训练参数
-    #   此时模型的主干被冻结了，特征提取网络不发生改变
-    #   占用的显存较小，仅对网络进行微调
-    #   Init_Epoch          模型当前开始的训练世代，其值可以大于Freeze_Epoch，如设置：
-    #                       Init_Epoch = 60、Freeze_Epoch = 50、UnFreeze_Epoch = 100
-    #                       会跳过冻结阶段，直接从60代开始，并调整对应的学习率。
-    #                       （断点续练时使用）
-    #   Freeze_Epoch        模型冻结训练的Freeze_Epoch
-    #                       (当Freeze_Train=False时失效)
-    #   Freeze_batch_size   模型冻结训练的batch_size
-    #                       (当Freeze_Train=False时失效)
-    # ------------------------------------------------------------------#
+
     init_epoch = 0
     freeze_epoch = FROZEN_EPOCH
     freeze_batch_size = FROZEN_BATCH_SIZE
@@ -255,9 +196,6 @@ if __name__ == "__main__":
     #   save_period     多少个epoch保存一次权值
     # ------------------------------------------------------------------#
     save_period = 5
-    # ------------------------------------------------------------------#
-    #   save_dir        权值与日志文件保存的文件夹
-    # ------------------------------------------------------------------#
     save_dir = SAVE_PATH
     # ------------------------------------------------------------------#
     #   eval_flag       是否在训练时进行评估，评估对象为验证集
@@ -270,21 +208,12 @@ if __name__ == "__main__":
     eval_flag = True
     eval_period = 5
 
-    # ------------------------------------------------------------------#
-    #   VOCdevkit_path  数据集路径
-    # ------------------------------------------------------------------#
     VOCdevkit_path = DATASET_PATH
-    # ------------------------------------------------------------------#
-    #   建议选项：
-    #   种类少（几类）时，设置为True
-    #   种类多（十几类）时，如果batch_size比较大（10以上），那么设置为True
-    #   种类多（十几类）时，如果batch_size比较小（10以下），那么设置为False
-    # ------------------------------------------------------------------#
     dice_loss = DICE_LOSS
     # ------------------------------------------------------------------#
     #   是否使用focal loss来防止正负样本不平衡
     # ------------------------------------------------------------------#
-    focal_loss = False
+    focal_loss = FOCAL_LOSS
     # ------------------------------------------------------------------#
     #   是否给不同种类赋予不同的损失权值，默认是平衡的。
     #   设置的话，注意设置成numpy形式的，长度和num_classes一样。
@@ -537,6 +466,11 @@ if __name__ == "__main__":
         # ---------------------------------------#
         #   开始模型训练
         # ---------------------------------------#
+        import csv
+        with open(os.path.join(save_dir,"logs.csv"),'wb') as f:
+            csv_write = csv.writer(f)
+            csv_head = ["Epoch","TotalLoss", "ValLoss"]
+            csv_write.writerow(csv_head)
         for epoch in range(init_epoch, unfreeze_epoch):
             # ---------------------------------------#
             #   如果模型有冻结学习部分

@@ -1,5 +1,5 @@
 import os
-
+import csv
 import torch
 from nets.deeplabv3_training import (CE_Loss, Dice_loss, Focal_Loss,
                                      weights_init)
@@ -166,7 +166,10 @@ def fit_one_epoch(model_train, model, loss_history, eval_callback, optimizer, ep
         eval_callback.on_epoch_end(epoch + 1, model_train)
         print('Epoch:' + str(epoch + 1) + '/' + str(Epoch))
         print('Total Loss: %.3f || Val Loss: %.3f ' % (total_loss / epoch_step, val_loss / epoch_step_val))
-
+        with open(os.path.join(save_dir,"logs.csv"),'a+') as f:
+            csv_write = csv.writer(f)
+            data_row = [epoch + 1, "%.3f"%(total_loss / epoch_step),"%.3f"%(val_loss / epoch_step_val)]
+            csv_write.writerow(data_row)
         # -----------------------------------------------#
         #   保存权值
         # -----------------------------------------------#

@@ -28,6 +28,7 @@ def export_onnx(net,f,imgsz=512,**kwargs):
             pr = F.softmax(pr.permute(0, 2, 3, 1), dim=-1)
             pr = torch.argmax(pr, -1)
             return pr
+    net=Net_with_post(net)
 
     print(f'Starting export with onnx {onnx.__version__}.')
     torch.onnx.export(net,
@@ -109,7 +110,10 @@ if __name__ == "__main__":
     FORMATS=args.format
     model_path=os.path.join(SAVE_PATH,"best_epoch_weights.pth")
     net = Labs(num_classes=NUM_CLASSES, backbone=BACKBONE,
-               downsample_factor=DOWNSAMPLE_FACTOR, pretrained=True, header=PP, img_sz=[IMGSZ,IMGSZ])
+               downsample_factor=DOWNSAMPLE_FACTOR, pretrained=False, header=PP, img_sz=[IMGSZ,IMGSZ])
+    device = torch.device('cpu')
+    net.load_state_dict(torch.load(model_path, map_location=device))
+    net = net.eval()
     mod = sys.modules[__name__]
     for format in FORMATS:
         func = getattr(mod, "export_"+format)

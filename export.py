@@ -6,7 +6,6 @@ from torch import nn
 import torch.nn.functional as F
 import onnx
 sys.path.append(os.getcwd())
-from AllLabs import DeeplabV3
 from nets.labs import Labs
 
 

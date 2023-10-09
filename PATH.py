@@ -7,4 +7,7 @@ ROOT = FILE.parents[0]  # YOLOv5 root directory
 if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))  # add ROOT to PATH
 ROOT = Path(os.path.relpath(ROOT, Path.cwd()))
-WTS_STORAGE_DIR=ROOT/ "model_data/"
+_WTS_STORAGE_DIR=Path(os.path.expanduser('~'))/ ".lab_model/"
+if not os.path.exists(_WTS_STORAGE_DIR):
+    os.mkdir(_WTS_STORAGE_DIR)
+WTS_STORAGE_DIR=_WTS_STORAGE_DIR

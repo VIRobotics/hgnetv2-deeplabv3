@@ -1,6 +1,7 @@
 import numpy as np
 from PIL import Image
-
+import os
+from PATH import WTS_STORAGE_DIR
 
 # ---------------------------------------------------------#
 #   将图像转换成RGB图像，防止灰度图在预测时报错。
@@ -56,10 +57,9 @@ def show_config(**kwargs):
     print('-' * 70)
 
 
-def download_weights(backbone, model_dir="./model_data"):
+def download_weights(backbone, model_dir=WTS_STORAGE_DIR):
     import os
     from utils.download import download_from_url,IntegrityError
-    from torch.hub import load_state_dict_from_url
 
     download_urls = {
         'mobilenet': ['https://github.com/bubbliiiing/deeplabv3-plus-pytorch/releases/download/v1.0/mobilenet_v2.pth.tar'],

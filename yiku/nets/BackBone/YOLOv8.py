@@ -1,7 +1,10 @@
 import sys
 from torch import nn
 import os
-from ultralytics.models import YOLO
+try:
+    from ultralytics.models import YOLO
+except ImportError as e:
+    pass
 from PATH import WTS_STORAGE_DIR
 class YOLOv8_backbone(nn.Module):   #### Not Recommand (Low mIOU)
     def __init__(self, *args, **kwargs):

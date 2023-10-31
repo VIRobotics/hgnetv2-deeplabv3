@@ -168,8 +168,6 @@ if __name__ == "__main__":
                 if not os.path.exists(dir_save_path):
                     os.makedirs(dir_save_path)
                 r_image.save(os.path.join(dir_save_path, img_name))
-    elif mode == "export_onnx":
-        deeplab.convert_to_onnx(simplify, onnx_save_path)
 
     else:
         raise AssertionError("Please specify the correct mode: 'predict', 'video', 'fps' or 'dir_predict'.")

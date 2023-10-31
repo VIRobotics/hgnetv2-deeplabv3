@@ -1,6 +1,6 @@
 import datetime
 import os
-
+from yiku.PATH import *
 import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
@@ -45,13 +45,13 @@ sys.path.append(os.getcwd())
 
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--config',default="config.ini")
     config = configparser.ConfigParser()
     args = parser.parse_args()
     if os.path.exists(args.config):
-        config.read(args.config)
+        config.read(args.config,encoding='utf-8')
     else:
         config["base"]={}
         config["advance"] = {}
@@ -530,3 +530,5 @@ if __name__ == "__main__":
 
         if local_rank == 0:
             pass
+if __name__ == "__main__":
+    main()

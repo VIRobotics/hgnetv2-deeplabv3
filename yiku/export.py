@@ -35,6 +35,8 @@ def export_onnx(net,f,imgsz=512,**kwargs):
     if batch<=0:
         dynamic = {'images': {0: 'batch'}}
         dynamic['output0'] = {0: 'batch'}
+    else:
+        dynamic=False
 
     print(f'Starting export with onnx {onnx.__version__}.')
     torch.onnx.export(net,
@@ -104,7 +106,7 @@ if __name__ == "__main__":
     config = configparser.ConfigParser()
     args = parser.parse_args()
     if os.path.exists(args.config):
-        config.read(args.config)
+        config.read(args.config,encoding="utf-8")
     else:
         config["base"]={}
         config["advance"] = {}

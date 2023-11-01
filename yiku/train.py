@@ -1,6 +1,4 @@
 import datetime
-import os
-from yiku.PATH import *
 import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
@@ -467,7 +465,7 @@ def main():
         #   开始模型训练
         # ---------------------------------------#
         import csv
-        with open(os.path.join(save_dir,"logs.csv"),'wb') as f:
+        with open(os.path.join(save_dir,"logs.csv"),'w') as f:
             csv_write = csv.writer(f)
             csv_head = ["Epoch","TotalLoss", "ValLoss"]
             csv_write.writerow(csv_head)

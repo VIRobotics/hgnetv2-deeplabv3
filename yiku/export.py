@@ -97,7 +97,7 @@ def export_paddle(net,f,imgsz=512,**kwargs):
     return fo
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--config',default="config.ini")
     parser.add_argument('-f', '--format',nargs="*" ,default=["onnx"])
@@ -145,3 +145,5 @@ if __name__ == "__main__":
         func = getattr(mod, "export_"+format)
         func(net,os.path.join(SAVE_PATH,"best"),IMGSZ,fp16=args.half,batch=args.batch)
 
+if __name__ == "__main__":
+    main()

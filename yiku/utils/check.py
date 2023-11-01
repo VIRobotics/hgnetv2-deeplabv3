@@ -12,7 +12,8 @@ def check_amp(device="0"):
     if not torch.cuda.is_available():
         return False
     DEVICE = torch.device("cuda:0")
-    m=mobilenet_v3_small(weights=MobileNet_V3_Small_Weights.IMAGENET1K_V1)
+    m=mobilenet_v3_small(weights=None)
+    m.load_state_dict(torch.load(ASSETS / 'mobilenet_v3_small.pth'))
     im_path = ASSETS / 'amp-test.jpg'  # image to check
     im=pre(Image.open(im_path))
     im = torch.unsqueeze(im, 0)

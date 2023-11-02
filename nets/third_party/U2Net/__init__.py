@@ -1,1 +1,0 @@
-from .net import U2NET,U2NETP

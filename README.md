@@ -94,6 +94,7 @@ VOC拓展数据集的百度网盘如下：
 2、下载config.ini 根据实际情况修改  
 3、命令行输入`siren.train -c config文件路径`。
 
+4、~~实际你也可以`python -m yiku.train -c config.ini`~~
 #### b、训练自己的数据集
 
 1、本文使用VOC格式进行训练。  
@@ -104,6 +105,12 @@ VOC拓展数据集的百度网盘如下：
 6、注意修改train.py的num_classes为分类个数+1。    
 7、运行`siren.train -c config文件路径`即可开始训练。
 
+### 导出步骤
+1、命令行输入`siren.export -c config文件路径`。onnx位于配置文件的训练结果文件夹
+
+2、~~运行`python -m yiku.train -c config文件路径`也可以导出~~。
+
+目前只能导出best权重的模型 后续将提供选项覆写模型路径
 ### 预测步骤
 
 #### a、使用预训练权重

@@ -100,9 +100,10 @@ def export_paddle(net,f,imgsz=512,**kwargs):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--config',default="config.ini")
-    parser.add_argument('-f', '--format',nargs="*" ,default=["onnx"])
-    parser.add_argument('--half', action='store_true')
-    parser.add_argument("-b",'--batch', type=int,default=1)
+    parser.add_argument('-f', '--format',nargs="*" ,default=["onnx"],help="format to export (onnx,openvino)")
+    parser.add_argument('--half', action='store_true',help="set this flag to export fp16 ov model")
+    parser.add_argument("-b",'--batch', type=int,default=1,help="batch,set -1 for dynamic batch")
+    parser.add_argument("-m", '--model', default=None, help=".pth model path to override config file")
     config = configparser.ConfigParser()
     args = parser.parse_args()
     if os.path.exists(args.config):
@@ -134,7 +135,9 @@ def main():
     DICE_LOSS= config["advance"].getboolean("dice_loss",True)
     FOCAL_LOSS = config["advance"].getboolean("focal_loss", False)
     FORMATS=args.format
-    model_path=os.path.join(SAVE_PATH,"best_epoch_weights.pth")
+    model_path = os.path.join(SAVE_PATH, "best_epoch_weights.pth")
+    if args.model and os.path.isfile(str(args.model)):
+        model_path=str(args.model)
     net = Labs(num_classes=NUM_CLASSES, backbone=BACKBONE,
                downsample_factor=DOWNSAMPLE_FACTOR, pretrained=False, header=PP, img_sz=[IMGSZ,IMGSZ])
     device = torch.device('cpu')

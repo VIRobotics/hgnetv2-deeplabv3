@@ -15,6 +15,14 @@
 
 ## Top News
 
+**`2023-11`** : **使用命令行工具训练**
+
+~~”不行啊，每次都要改代码，感觉不如OO啊“~~
+
+您还在为改python文件烦恼吗，您还在为乱哄哄的文件夹烦恼吗，赶快使用
+`pip install git+https://gitee.com/yiku-ai/hgnetv2-deeplabv3` 安装吧，装了你不吃亏，装了你不上当。
+
+
 **`2023-09`** : **新增TransLab分割头，可以通过设置pp参数切换**
 
 TransLab是一款由仪酷智能科技有限公司开发的分割头，在这款分割头里面，我们将DeepLabv3基于传统卷积的空洞卷积 换成了基于Transformer的AIFI模块
@@ -106,84 +114,37 @@ VOC拓展数据集的百度网盘如下：
 7、运行`siren.train -c config文件路径`即可开始训练。
 
 ### 导出步骤
-1、命令行输入`siren.export -c config文件路径`。onnx位于配置文件的训练结果文件夹
+1、命令行输入`siren.export -c config文件路径 -f onnx`。onnx位于配置文件的训练结果文件夹。
+-f 参数支持 onnx openvino 和paddle 其中 还有--half 只要这个flag存在 openvino就是导出FP16精度的模型，
+这在较新XeGPU上相比FP32有两倍的提升。所以参数 可以输入`siren.export -h`
 
-2、~~运行`python -m yiku.train -c config文件路径`也可以导出~~。
+2、~~运行`python -m yiku.export -c config文件路径 -f onnx`也可以导出~~。
 
-目前只能导出best权重的模型 后续将提供选项覆写模型路径
+
 ### 预测步骤
 
 #### a、使用预训练权重
 
-1、下载完库后解压，如果想用backbone为mobilenet的进行预测，直接运行predict.py就可以了；如果想要利用backbone为xception的进行预测，在百度网盘下载deeplab_xception.pth，放入model_data，修改deeplab.py的backbone和model_path之后再运行predict.py，输入。
+1、根据下载的模型 修改config.ini，直接输入`siren.pred -c config.ini -i http://just.样例.link/怒O大伟出奇迹.jpg -m 你模型的路径.pth`
 
-```bash
-img/street.jpg
-```
+-i 参数可以是图片 可以是uri 可以是相机索引 可以是视频 可以是文件夹
 
-可完成预测。    
-2、在predict.py里面进行设置可以进行fps测试、整个文件夹的测试和video视频检测。
+--show 这个flag设置后就会将结果弹窗弹出。
+
+-h 查看所有参数的帮助
+
+
 
 #### b、使用自己训练的权重
 
 1、按照训练步骤训练。    
-2、在deeplab.py文件里面，在如下部分修改model_path、num_classes、backbone使其对应训练好的文件；*
-*model_path对应logs文件夹下面的权值文件，num_classes代表要预测的类的数量加1，backbone是所使用的主干特征提取网络**。
+2、使用训练的config即可，无需手动指定权重。
 
-```python
-_defaults = {
-    # ----------------------------------------#
-    #   model_path指向logs文件夹下的权值文件
-    # ----------------------------------------#
-    "model_path": 'model_data/deeplab_hgnetv2.pth',
-    # ----------------------------------------#
-    #   所需要区分的类的个数+1
-    # ----------------------------------------#
-    "num_classes": 21,
-    # ----------------------------------------#
-    #   所使用的的主干网络
-    #   此处可选：mobilenet| xception | hgnetv2l | hgnetv2x | yolov8s | yolov8m | mobilenetv3s | mobilenetv3l
-    # ----------------------------------------#
-    "backbone": "hgnetv2l",
-    # ----------------------------------------#
-    #   输入图片的大小
-    # ----------------------------------------#
-    "input_shape": [512, 512],
-    # ----------------------------------------#
-    #   下采样的倍数，一般可选的为8和16
-    #   与训练时设置的一样即可
-    # ----------------------------------------#
-    "downsample_factor": 16,
-    # --------------------------------#
-    #   blend参数用于控制是否
-    #   让识别结果和原图混合
-    # --------------------------------#
-    "blend": True,
-    # -------------------------------#
-    #   是否使用Cuda
-    #   没有GPU可以设置成False
-    # -------------------------------#
-    "cuda": True,
-    # -------------------------------#
-    #   使用何种头部 transformer代表使用TransLab 使用ASPP代表使用原版
-    "pp":"transformer"
-}
-```
 
-3、运行predict.py，输入
-
-```bash
-img/street.jpg
-```
 
 可完成预测。    
 4、在predict.py里面进行设置可以进行fps测试、整个文件夹的测试和video视频检测。
 
-### 评估步骤
-
-1、设置get_miou.py里面的num_classes为预测的类的数量加1。  
-2、设置get_miou.py里面的name_classes为需要去区分的类别。  
-3、运行get_miou.py即可获得miou大小。
 
 ### Reference
 

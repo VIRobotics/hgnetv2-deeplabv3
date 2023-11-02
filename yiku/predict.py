@@ -129,8 +129,9 @@ def auto_input_type(path:str):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--config', default="config.ini")
-    parser.add_argument('-i', '--input', default=ASSETS/"amp-test.jpg")
-    parser.add_argument( '--show',action="store_true")
+    parser.add_argument('-i', '--input', default=ASSETS/"amp-test.jpg",help="input to be inferenced ,Accept file dir cameraindex,and uri")
+    parser.add_argument( '--show',action="store_true",help="flag to enable playback")
+    parser.add_argument("-m", '--model', default=None, help=".pth model path to override config file")
     config = configparser.ConfigParser()
     args = parser.parse_args()
     if os.path.exists(args.config):
@@ -148,6 +149,8 @@ def main():
     PP = config["base"].get("header", "transformer")
     NUM_CLASSES = config["base"].getint("num_classes", 21)
     model_path = os.path.join(SAVE_PATH, "best_epoch_weights.pth")
+    if args.model and os.path.isfile(str(args.model)):
+        model_path=str(args.model)
     mode=auto_input_type(str(args.input))
     if mode:
         m = DeeplabV3(num_classes=NUM_CLASSES, backbone=BACKBONE, model_path=model_path

@@ -7,7 +7,7 @@ import torch.nn.functional as F
 import onnx
 sys.path.append(os.getcwd())
 from nets.labs import Labs
-
+from pathlib import Path
 
 def export_onnx(net,f,imgsz=512,**kwargs):
     f=f+".onnx"
@@ -146,7 +146,7 @@ def main():
     mod = sys.modules[__name__]
     for format in FORMATS:
         func = getattr(mod, "export_"+format)
-        func(net,os.path.join(SAVE_PATH,"best"),IMGSZ,fp16=args.half,batch=args.batch)
+        func(net,Path(SAVE_PATH)/Path(model_path).name,IMGSZ,fp16=args.half,batch=args.batch)
 
 if __name__ == "__main__":
     main()

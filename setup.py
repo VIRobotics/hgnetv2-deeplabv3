@@ -38,7 +38,7 @@ setup(
     packages=['yiku'] + [str(x) for x in Path('yiku').rglob('*/') if x.is_dir() and '__' not in str(x)],
     package_data={
         '': ['*.pth'],
-        'ultralytics.assets': ['*.jpg',"*.pth"]},
+        'yiku.assets': ['*.jpg',"*.pth"]},
     include_package_data=True,
     install_requires=parse_requirements(PARENT / 'requirements.txt'),
     classifiers=[

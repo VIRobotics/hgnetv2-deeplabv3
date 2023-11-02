@@ -28,7 +28,7 @@ def parse_requirements(file_path: Path):
 
 setup(
     name='yiku_seg',  # name of pypi package
-    version="0.1.1",  # version of pypi package
+    version="0.1.2a",  # version of pypi package
     python_requires='>=3.8',
     license='AGPL-3.0',
     description=('SegCollection'),
@@ -37,7 +37,7 @@ setup(
     author_email='',
     packages=['yiku'] + [str(x) for x in Path('yiku').rglob('*/') if x.is_dir() and '__' not in str(x)],
     package_data={
-        '': ['*.pth'],
+        '': ['*.jpg',"*.pth"],
         'yiku.assets': ['*.jpg',"*.pth"]},
     include_package_data=True,
     install_requires=parse_requirements(PARENT / 'requirements.txt'),

@@ -45,9 +45,9 @@ def pic_predict(m,i,o,**kwargs):
 def http_predict(m,i,o,**kwargs):
     with TemporaryDirectory() as dirname:
         i=download_from_url(i,dirname)
-        if Path(i).suffix in (".mp4",".mkv",".mov",".hevc"):
+        if Path(i).suffix.lower() in (".mp4",".mkv",".mov",".hevc"):
             video_predict(m,i,o,**kwargs)
-        elif Path(i).suffix in (".png",".jpg",".jpeg","bmp", '.pbm', '.pgm', '.ppm', '.tif', '.tiff'):
+        elif Path(i).suffix.lower() in (".png",".jpg",".jpeg","bmp", '.pbm', '.pgm', '.ppm', '.tif', '.tiff'):
             pic_predict(m,i,o,**kwargs)
 
 
@@ -114,9 +114,9 @@ def auto_input_type(path:str):
             if path.is_dir():
                 mode="dir_predict"
             elif path.is_file() :
-                if str(path.suffix) in (".png",".jpg",".jpeg","bmp", '.pbm', '.pgm', '.ppm', '.tif', '.tiff'):
+                if str(path.suffix).lower() in (".png",".jpg",".jpeg","bmp", '.pbm', '.pgm', '.ppm', '.tif', '.tiff'):
                     mode = "pic_predict"
-                elif str(path.suffix) in (".mp4",".mkv",".mov",".hevc"):
+                elif str(path.suffix).lower() in (".mp4",".mkv",".mov",".hevc"):
                     mode = "video_predict"
                 else:
                     raise NameError("Not a media file %s"%str(path))

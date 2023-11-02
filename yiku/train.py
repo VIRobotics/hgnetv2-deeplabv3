@@ -46,6 +46,7 @@ sys.path.append(os.getcwd())
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--config',default="config.ini")
+    parser.add_argument('-r', '--resume', action="store_true")
     config = configparser.ConfigParser()
     args = parser.parse_args()
     if os.path.exists(args.config):
@@ -68,6 +69,7 @@ def main():
     BACKBONE = config["base"].get("backbone","hgnetv2l")
     NUM_CLASSES = config["base"].getint("num_classes",21)
     PP = config["base"].get("header", "transformer")
+    num_workers = config["base"].getint("num_workers",4)
 
     if "advance" not in config:
         config["advance"] = {}
@@ -76,6 +78,7 @@ def main():
     DOWNSAMPLE_FACTOR = config["advance"].getint("downsample_factor",16)
     DICE_LOSS= config["advance"].getboolean("dice_loss",True)
     FOCAL_LOSS = config["advance"].getboolean("focal_loss", False)
+    RESUME=args.resume
     #focal_loss
 
 
@@ -140,9 +143,13 @@ def main():
 
     downsample_factor = DOWNSAMPLE_FACTOR
     input_shape = [IMGSZ, IMGSZ]
-
-
-    init_epoch = 0
+    if RESUME:
+        meta = torch.load(os.path.join(SAVE_PATH, "last.meta"))
+        init_epoch = meta["curr_epoch"]
+        model_path=os.path.join(SAVE_PATH, "last_epoch_weights.pth")
+        pretrained=False
+    else:
+        init_epoch = 0
     freeze_epoch = FROZEN_EPOCH
     freeze_batch_size = FROZEN_BATCH_SIZE
     # ------------------------------------------------------------------#
@@ -226,7 +233,6 @@ def main():
     #                   keras里开启多线程有些时候速度反而慢了许多
     #                   在IO为瓶颈的时候再开启多线程，即GPU运算速度远大于读取图片的速度。
     # ------------------------------------------------------------------#
-    num_workers = 4
 
     # ------------------------------------------------------#
     #   设置用到的显卡
@@ -296,6 +302,9 @@ def main():
         time_str = datetime.datetime.strftime(datetime.datetime.now(), '%Y_%m_%d_%H_%M_%S')
         log_dir = os.path.join(save_dir, "loss_" + str(time_str))
         loss_history = LossHistory(log_dir, model, input_shape=input_shape)
+        if RESUME:
+            loss_history.val_loss=meta["val_his_loss"]
+            loss_history.losses=meta["his_loss"]
     else:
         loss_history = None
 

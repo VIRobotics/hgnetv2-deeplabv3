@@ -55,4 +55,6 @@ setup(
         'Operating System :: MacOS',
         'Operating System :: Microsoft :: Windows', ],
     keywords='machine-learning, deep-learning, vision, ML, DL, AI, ImageSegment ,DeepLab, Transformer',
-    entry_points={'console_scripts': ['siren.train = yiku.train:main', 'siren.export= yiku.export:main']})
+    entry_points={'console_scripts': ['siren.train = yiku.train:main',
+                                      'siren.pred = yiku.predict:main',
+                                      'siren.export= yiku.export:main']})

@@ -22,6 +22,8 @@
 您还在为改python文件烦恼吗，您还在为乱哄哄的文件夹烦恼吗，赶快使用
 `pip install git+https://gitee.com/yiku-ai/hgnetv2-deeplabv3` 安装吧，装了你不吃亏，装了你不上当。
 
+更新了七彩VIP皮肤，不过不用担心，我已经给你充值好了，可以直接使用
+
 
 **`2023-09`** : **新增TransLab分割头，可以通过设置pp参数切换**
 

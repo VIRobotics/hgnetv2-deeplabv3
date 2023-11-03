@@ -2,6 +2,13 @@ import numpy as np
 from PIL import Image
 import os
 from PATH import WTS_STORAGE_DIR
+try:
+    from rich.console import Console
+    from rich.table import Table
+except ImportError:
+    from pip._vendor.rich.table import Table
+    from pip._vendor.rich.console import Console
+
 
 # ---------------------------------------------------------#
 #   将图像转换成RGB图像，防止灰度图在预测时报错。
@@ -48,13 +55,13 @@ def preprocess_input(image):
 
 
 def show_config(**kwargs):
-    print('Configurations:')
-    print('-' * 70)
-    print('|%25s | %40s|' % ('keys', 'values'))
-    print('-' * 70)
+    table = Table(title="ConfigurationTable参数详情")
+    table.add_column("参数Arg", justify="right", style="cyan", no_wrap=True)
+    table.add_column("值Value", style="magenta")
     for key, value in kwargs.items():
-        print('|%25s | %40s|' % (str(key), str(value)))
-    print('-' * 70)
+        table.add_row(key,str(value))
+    console = Console()
+    console.print(table)
 
 
 def download_weights(backbone, model_dir=WTS_STORAGE_DIR):

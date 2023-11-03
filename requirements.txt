@@ -6,4 +6,3 @@ Pillow ==10.1.0
 scipy
 torch
 torchvision
-tqdm

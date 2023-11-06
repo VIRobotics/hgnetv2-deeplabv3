@@ -52,9 +52,12 @@ def fit_one_epoch(model_train, model, loss_history, eval_callback, optimizer, ep
                              BarColumn(),
                              TaskProgressColumn(),
                              TimeElapsedColumn(),
-                             TimeRemainingColumn(), '📈','[orange1]total_loss:{task.fields[total_loss]:.3f}',
-                             "  ", '[dark_magenta]f_score:{task.fields[f_score]:.3f}', " ",
-                             "[dodger_blue2]lr:{task.fields[lr]:.6f}")
+                             TimeRemainingColumn(), '📈','[bold orange1]total_loss:',
+                             '[bold]{task.fields[total_loss]:.3f}',
+                             "  ", '[bold dark_magenta]f_score:',
+                             '[bold]{task.fields[f_score]:.3f}', " ",
+                             "[bold dodger_blue2]lr:",
+                             "[bold]{task.fields[lr]:.6f}")
         task1 = rich_pbar.add_task(f'[orange1]training epoch {epoch + 1}/{Epoch}', total=len(gen), total_loss=float('nan'), f_score=float('nan'), lr=float('nan'))
         rich_pbar.start()
 
@@ -157,9 +160,12 @@ def fit_one_epoch(model_train, model, loss_history, eval_callback, optimizer, ep
                              BarColumn(),
                              TaskProgressColumn(),
                              TimeElapsedColumn(),
-                             TimeRemainingColumn(), '📈','[pink1]val_loss:{task.fields[val_loss]:.3f}',
-                             "  ", '[green4]f_score:{task.fields[f_score]:.3f}', " ",
-                             "[dodger_blue1]lr:{task.fields[lr]:.6f}")
+                             TimeRemainingColumn(), '📈','[bold pink1]val_loss:',
+                             '[bold]{task.fields[val_loss]:.3f}',
+                             "  ", '[bold green4]f_score:',
+                             '[bold]{task.fields[f_score]:.3f}', " ",
+                             "[bold dodger_blue1]lr:",
+                             "[bold]{task.fields[lr]:.6f}")
 
         task1 = rich_pbar.add_task(f'[pink1]val epoch {epoch + 1}/{Epoch}', total=len(gen_val), val_loss=float('nan'),
                                    f_score=float('nan'), lr=float('nan'))
@@ -215,8 +221,8 @@ def fit_one_epoch(model_train, model, loss_history, eval_callback, optimizer, ep
         # pbar.close()
         loss_history.append_loss(epoch + 1, total_loss / epoch_step, val_loss / epoch_step_val)
         eval_callback.on_epoch_end(epoch + 1, model_train)
-        print('🚪 Epoch:' + str(epoch + 1) + '/' + str(Epoch))
-        print('📜 Total Loss: %.3f || Val Loss: %.3f ' % (total_loss / epoch_step, val_loss / epoch_step_val))
+        print('📜 [bold]Epoch:' + str(epoch + 1) + '/' + str(Epoch)+
+              ': Total Loss: %.3f || Val Loss: %.3f ' % (total_loss / epoch_step, val_loss / epoch_step_val))
         with open(Path(save_dir)/ "logs.csv", 'a+') as f:
             csv_write = csv.writer(f)
             data_row = [epoch + 1, "%.3f" % (total_loss / epoch_step), "%.3f" % (val_loss / epoch_step_val)]

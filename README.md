@@ -1,4 +1,4 @@
-## Torch版的TransLab和DeepLabv3+全家桶
+## Torch版的语义分割全家桶（TransLab DeepLabv3+ Unet一键训练与导出）
 ---
 
 ### 目录
@@ -14,6 +14,14 @@
 9. [参考资料 Reference](#Reference)
 
 ## Top News
+
+<details> <summary>更新日志：增加HGNetv2-Unet模型</summary>
+
+**`2023-11`** : **增加Unet模型**
+
+~~Unet伫立在大地之上~~
+
+新增了UNet+百度HGNetv2的杂交模型，可以在配置文件base字段里增加 arch=unet启用
 
 **`2023-11`** : **使用命令行工具训练**
 
@@ -45,6 +53,7 @@ TransLab是一款由仪酷智能科技有限公司开发的分割头，在这款
 BiliBili视频中的原仓库地址为：https://github.com/bubbliiiing/deeplabv3-plus-pytorch/tree/bilibili
 
 **`2020-08`**:**创建仓库、支持多backbone、支持数据miou评估、标注数据处理、大量注释等。**
+</details>
 
 ## 相关仓库
 

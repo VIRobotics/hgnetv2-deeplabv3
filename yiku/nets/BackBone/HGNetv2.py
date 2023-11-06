@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 import sys
-from PATH import WTS_STORAGE_DIR
+from yiku.PATH import WTS_STORAGE_DIR
 from nets.modules.HGBlock import HGStem,HGBlock
 from nets.modules.block import DWConv
 
@@ -93,6 +93,16 @@ def hgnetv2x(pretrained=True, **kwargs):
     return HG_backbone(pretrained=pretrained,arch="x")
 
 if __name__=="__main__":
-    x=torch.rand(1,3,640,640)
-    m=hgnetv2l()
+    class M(nn.Module):
+        def __init__(self, *args, **kwargs):
+            super().__init__()
+            self.m=HG_backbone_l()
+
+        def forward(self,x):
+            for i,modules in enumerate(self.m.mlist):
+                x = modules(x)
+                print(i,x.shape)
+            return x
+    m=M()
+    x=torch.rand(1,3,512,512)
     m(x)

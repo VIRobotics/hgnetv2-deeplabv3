@@ -1,6 +1,7 @@
 import os
 import csv
 import torch
+from pathlib import Path
 from nets.deeplabv3_training import (CE_Loss, Dice_loss, Focal_Loss,
                                      weights_init)
 #from tqdm import tqdm
@@ -14,7 +15,7 @@ try:
         DownloadColumn,
         Progress,
         SpinnerColumn,
-        TaskProgressColumn,
+        TaskProgressColumn,track,
         TimeElapsedColumn,
         TimeRemainingColumn)
     from rich import print
@@ -26,12 +27,12 @@ except ImportError:
         BarColumn,
         DownloadColumn,
         Progress,
-        SpinnerColumn,
+        SpinnerColumn,track,
         TaskProgressColumn,
         TimeElapsedColumn,
         TimeRemainingColumn
     )
-    from rich import print
+    from pip._vendor.rich import print
 
 
 def fit_one_epoch(model_train, model, loss_history, eval_callback, optimizer, epoch, epoch_step, epoch_step_val, gen,
@@ -47,11 +48,11 @@ def fit_one_epoch(model_train, model, loss_history, eval_callback, optimizer, ep
         # pbar = tqdm(total=epoch_step, desc=f'epoch {epoch + 1}/{Epoch}', postfix=dict, mininterval=0.3, leave=False,
         #             ncols=150)
         rich_pbar = Progress(SpinnerColumn(),
-                             "🐱{task.description}",
+                             "🐱","{task.description}",
                              BarColumn(),
                              TaskProgressColumn(),
                              TimeElapsedColumn(),
-                             TimeRemainingColumn(), '📈[orange1]total_loss:{task.fields[total_loss]:.3f}',
+                             TimeRemainingColumn(), '📈','[orange1]total_loss:{task.fields[total_loss]:.3f}',
                              "  ", '[dark_magenta]f_score:{task.fields[f_score]:.3f}', " ",
                              "[dodger_blue2]lr:{task.fields[lr]:.6f}")
         task1 = rich_pbar.add_task(f'[orange1]training epoch {epoch + 1}/{Epoch}', total=len(gen), total_loss=float('nan'), f_score=float('nan'), lr=float('nan'))
@@ -152,11 +153,11 @@ def fit_one_epoch(model_train, model, loss_history, eval_callback, optimizer, ep
         # pbar = tqdm(total=epoch_step_val, desc=f'Epoch {epoch + 1}/{Epoch}', postfix=dict, mininterval=0.3)
         del rich_pbar
         rich_pbar = Progress(SpinnerColumn(),
-                             "🌕{task.description}",
+                             "🌕","{task.description}",
                              BarColumn(),
                              TaskProgressColumn(),
                              TimeElapsedColumn(),
-                             TimeRemainingColumn(), '📈[pink1]val_loss:{task.fields[val_loss]:.3f}',
+                             TimeRemainingColumn(), '📈','[pink1]val_loss:{task.fields[val_loss]:.3f}',
                              "  ", '[green4]f_score:{task.fields[f_score]:.3f}', " ",
                              "[dodger_blue1]lr:{task.fields[lr]:.6f}")
 
@@ -201,7 +202,7 @@ def fit_one_epoch(model_train, model, loss_history, eval_callback, optimizer, ep
             val_f_score += _f_score.item()
 
             if local_rank == 0:
-                rich_pbar.update(task1, tval_loss=val_loss / (iteration + 1),
+                rich_pbar.update(task1, val_loss=val_loss / (iteration + 1),
                                  f_score=val_f_score / (iteration + 1),
                                  lr=get_lr(optimizer), advance=1)
                 # pbar.set_postfix(**{'val_loss': val_loss / (iteration + 1),
@@ -214,9 +215,9 @@ def fit_one_epoch(model_train, model, loss_history, eval_callback, optimizer, ep
         # pbar.close()
         loss_history.append_loss(epoch + 1, total_loss / epoch_step, val_loss / epoch_step_val)
         eval_callback.on_epoch_end(epoch + 1, model_train)
-        print('🚪Epoch:' + str(epoch + 1) + '/' + str(Epoch))
-        print('📜Total Loss: %.3f || Val Loss: %.3f ' % (total_loss / epoch_step, val_loss / epoch_step_val))
-        with open(os.path.join(save_dir, "logs.csv"), 'a+') as f:
+        print('🚪 Epoch:' + str(epoch + 1) + '/' + str(Epoch))
+        print('📜 Total Loss: %.3f || Val Loss: %.3f ' % (total_loss / epoch_step, val_loss / epoch_step_val))
+        with open(Path(save_dir)/ "logs.csv", 'a+') as f:
             csv_write = csv.writer(f)
             data_row = [epoch + 1, "%.3f" % (total_loss / epoch_step), "%.3f" % (val_loss / epoch_step_val)]
             csv_write.writerow(data_row)
@@ -230,11 +231,11 @@ def fit_one_epoch(model_train, model, loss_history, eval_callback, optimizer, ep
         meta["epoch_step_val"] = epoch_step_val
         meta["curr_val_loss"] = val_loss
         if (epoch + 1) % save_period == 0 or epoch + 1 == Epoch:
-            torch.save(model.state_dict(), os.path.join(save_dir, 'ep%03d-loss%.3f-val_loss%.3f.pth' % (
+            torch.save(model.state_dict(), Path(save_dir)/('ep%03d-loss%.3f-val_loss%.3f.pth' % (
                 epoch + 1, total_loss / epoch_step, val_loss / epoch_step_val)))
         if len(loss_history.val_loss) <= 1 or (val_loss / epoch_step_val) <= min(loss_history.val_loss):
-            print('⚾[green1] Save best model to best_epoch_weights.pth')
-            torch.save(model.state_dict(), os.path.join(save_dir, "best_epoch_weights.pth"))
-            torch.save(meta, "best.meta")
-        torch.save(model.state_dict(), os.path.join(save_dir, "last_epoch_weights.pth"))
-        torch.save(meta, "last.meta")
+            print('⚾ [green1] Save best model to best_epoch_weights.pth')
+            torch.save(model.state_dict(), Path(save_dir)/ "best_epoch_weights.pth")
+            torch.save(meta, Path(save_dir)/"best.meta")
+        torch.save(model.state_dict(), Path(save_dir)/ "last_epoch_weights.pth")
+        torch.save(meta, Path(save_dir)/"last.meta")

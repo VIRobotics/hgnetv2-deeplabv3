@@ -13,7 +13,30 @@ import shutil
 import numpy as np
 
 from PIL import Image
-from tqdm import tqdm
+try:
+    from rich.progress import (
+        BarColumn,
+        DownloadColumn,
+        Progress,
+        SpinnerColumn,
+        TaskProgressColumn,track,
+        TimeElapsedColumn,
+        TimeRemainingColumn)
+    from rich import print
+except ImportError:
+    import warnings
+
+    warnings.filterwarnings('ignore', message="Setuptools is replacing distutils.", category=UserWarning)
+    from pip._vendor.rich.progress import (
+        BarColumn,
+        DownloadColumn,
+        Progress,
+        SpinnerColumn,track,
+        TaskProgressColumn,
+        TimeElapsedColumn,
+        TimeRemainingColumn
+    )
+    from pip._vendor.rich import print
 #from torch.utils.tensorboard import SummaryWriter
 from .utils import cvtColor, preprocess_input, resize_image
 from .utils_metrics import compute_mIoU
@@ -159,8 +182,7 @@ class EvalCallback():
                 os.makedirs(self.miou_out_path)
             if not os.path.exists(pred_dir):
                 os.makedirs(pred_dir)
-            print("Get miou.")
-            for image_id in tqdm(self.image_ids):
+            for image_id in track(self.image_ids,description="geting mIoU"):
                 #-------------------------------#
                 #   从文件中读取图像
                 #-------------------------------#

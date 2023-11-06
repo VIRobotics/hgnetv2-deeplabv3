@@ -39,8 +39,8 @@ import configparser
 import argparse
 import sys,os
 sys.path.append(os.getcwd())
-
-
+from config import LabConfig,UNetConfig
+from nets.third_party.UNet import UNet
 
 
 def main():
@@ -55,10 +55,16 @@ def main():
         config["base"]={}
         config["advance"] = {}
     CONFIG_DIR=os.path.dirname(os.path.abspath(args.config))
-    FROZEN_BATCH_SIZE = config["base"].getint("frozen_batch-size",10)
-    FROZEN_EPOCH = config["base"].getint("frozen_epoch",75)
-    UNFROZEN_BATCH_SIZE = config["base"].getint("unfrozen_batch-size",6)
-    UNFROZEN_EPOCH = config["base"].getint("unfrozen_epoch",100)
+    ARCH = config["base"].get("arch", "lab")
+    if ARCH.lower() == "unet":
+        hyp_cfg = UNetConfig()
+    else:
+        hyp_cfg = LabConfig()
+
+    freeze_batch_size = config["base"].getint("frozen_batch-size",10)
+    freeze_epoch = config["base"].getint("frozen_epoch",75)
+    unfreeze_batch_size = config["base"].getint("unfrozen_batch-size",6)
+    unfreeze_epoch = config["base"].getint("unfrozen_epoch",100)
     IMGSZ= config["base"].getint("image_size",512)
     DATASET_PATH = config["base"].get("dataset_path", 'VOCdevkit')
     if not os.path.isabs(DATASET_PATH):
@@ -66,19 +72,27 @@ def main():
     SAVE_PATH = os.path.join(CONFIG_DIR,config["base"].get("save_path"))
     if not os.path.isabs(SAVE_PATH):
         SAVE_PATH=os.path.join(CONFIG_DIR,SAVE_PATH)
-    BACKBONE = config["base"].get("backbone","hgnetv2l")
-    NUM_CLASSES = config["base"].getint("num_classes",21)
-    PP = config["base"].get("header", "transformer")
+    backbone = config["base"].get("backbone","hgnetv2l")
+    num_classes = config["base"].getint("num_classes",21)
+    pp = config["base"].get("header", "transformer")
     num_workers = config["base"].getint("num_workers",4)
 
     if "advance" not in config:
         config["advance"] = {}
-    INIT_LR = config["advance"].getfloat("init_lr",7e-3)
-    MIN_LR_MULTIPLY = config["advance"].getfloat("min_lr_mutliply",0.01)
+
     DOWNSAMPLE_FACTOR = config["advance"].getint("downsample_factor",16)
     DICE_LOSS= config["advance"].getboolean("dice_loss",True)
-    FOCAL_LOSS = config["advance"].getboolean("focal_loss", False)
-    RESUME=args.resume
+    focal_loss = config["advance"].getboolean("focal_loss", False)
+    RESUME = args.resume
+
+    #HyperParam Config
+    init_lr = config["advance"].getfloat("init_lr", hyp_cfg.init_lr)
+    MIN_LR_MULTIPLY = config["advance"].getfloat("min_lr_mutliply", hyp_cfg.min_lr_mutliply)
+    optimizer_type = config["advance"].get("optimizer_type", hyp_cfg.optimizer_type)
+    momentum = config["advance"].getfloat("momentum", hyp_cfg.momentum)
+    weight_decay= config["advance"].getfloat("weight_decay", hyp_cfg.weight_decay)
+    lr_decay_type = config["advance"].getfloat("lr_decay_type", hyp_cfg.lr_decay_type)
+
     #focal_loss
 
 
@@ -111,9 +125,6 @@ def main():
         fp16 = check_amp()
     else:
         fp16 = False
-    num_classes = NUM_CLASSES
-    backbone = BACKBONE
-    pp = PP
     # ----------------------------------------------------------------------------------------------------------------------------#
     #   pretrained      是否使用主干网络的预训练权重，此处使用的是主干的权重，因此是在模型构建的时候进行加载的。
     #                   如果设置了model_path，则主干的权值无需加载，pretrained的值无意义。
@@ -150,8 +161,7 @@ def main():
         pretrained=False
     else:
         init_epoch = 0
-    freeze_epoch = FROZEN_EPOCH
-    freeze_batch_size = FROZEN_BATCH_SIZE
+
     # ------------------------------------------------------------------#
     #   解冻阶段训练参数
     #   此时模型的主干不被冻结了，特征提取网络会发生改变
@@ -159,8 +169,6 @@ def main():
     #   UnFreeze_Epoch          模型总共训练的epoch
     #   Unfreeze_batch_size     模型在解冻后的batch_size
     # ------------------------------------------------------------------#
-    unfreeze_epoch = UNFROZEN_EPOCH
-    unfreeze_batch_size = UNFROZEN_BATCH_SIZE
     # ------------------------------------------------------------------#
     #   Freeze_Train    是否进行冻结训练
     #                   默认先冻结主干训练后解冻训练。
@@ -180,23 +188,7 @@ def main():
     #                   当使用SGD优化器时建议设置   Init_lr=7e-3
     #   Min_lr          模型的最小学习率，默认为最大学习率的0.01
     # ------------------------------------------------------------------#
-    Init_lr = INIT_LR
-    Min_lr = Init_lr * MIN_LR_MULTIPLY
-    # ------------------------------------------------------------------#
-    #   optimizer_type  使用到的优化器种类，可选的有adam、sgd
-    #                   当使用Adam优化器时建议设置  Init_lr=5e-4
-    #                   当使用SGD优化器时建议设置   Init_lr=7e-3
-    #   momentum        优化器内部使用到的momentum参数
-    #   weight_decay    权值衰减，可防止过拟合
-    #                   adam会导致weight_decay错误，使用adam时建议设置为0。
-    # ------------------------------------------------------------------#
-    optimizer_type = "sgd"
-    momentum = 0.9
-    weight_decay = 1e-4
-    # ------------------------------------------------------------------#
-    #   lr_decay_type   使用到的学习率下降方式，可选的有'step'、'cos'
-    # ------------------------------------------------------------------#
-    lr_decay_type = 'cos'
+    min_lr = init_lr * MIN_LR_MULTIPLY
     # ------------------------------------------------------------------#
     #   save_period     多少个epoch保存一次权值
     # ------------------------------------------------------------------#
@@ -215,17 +207,7 @@ def main():
 
     VOCdevkit_path = DATASET_PATH
     dice_loss = DICE_LOSS
-    # ------------------------------------------------------------------#
-    #   是否使用focal loss来防止正负样本不平衡
-    # ------------------------------------------------------------------#
-    focal_loss = FOCAL_LOSS
-    # ------------------------------------------------------------------#
-    #   是否给不同种类赋予不同的损失权值，默认是平衡的。
-    #   设置的话，注意设置成numpy形式的，长度和num_classes一样。
-    #   如：
-    #   num_classes = 3
-    #   cls_weights = np.array([1, 2, 3], np.float32)
-    # ------------------------------------------------------------------#
+
     cls_weights = np.ones([num_classes], np.float32)
     # ------------------------------------------------------------------#
     #   num_workers     用于设置是否使用多线程读取数据，1代表关闭多线程
@@ -262,7 +244,10 @@ def main():
         else:
             download_weights(backbone)
 
-    model = Labs(num_classes=num_classes, backbone=backbone, downsample_factor=downsample_factor,
+    if ARCH.lower()=="unet":
+        model=UNet(num_classes=num_classes,pretrained=pretrained)
+    else:
+        model = Labs(num_classes=num_classes, backbone=backbone, downsample_factor=downsample_factor,
                  pretrained=pretrained, header=pp)
     if not pretrained:
         weights_init(model)
@@ -356,7 +341,7 @@ def main():
             num_classes=num_classes, backbone=backbone, model_path=model_path, input_shape=input_shape,
             Init_Epoch=init_epoch, Freeze_Epoch=freeze_epoch, UnFreeze_Epoch=unfreeze_epoch,
             Freeze_batch_size=freeze_batch_size, Unfreeze_batch_size=unfreeze_batch_size, Freeze_Train=freeze_Train,
-            Init_lr=Init_lr, Min_lr=Min_lr, optimizer_type=optimizer_type, momentum=momentum,
+            init_lr=init_lr, min_lr=min_lr, optimizer_type=optimizer_type, momentum=momentum,
             lr_decay_type=lr_decay_type,
             save_period=save_period, save_dir=save_dir, num_workers=num_workers, num_train=num_train, num_val=num_val
         )
@@ -394,8 +379,11 @@ def main():
         #   冻结一定部分训练
         # ------------------------------------#
         if freeze_Train:
-            for param in model.backbone.parameters():
-                param.requires_grad = False
+            if isinstance(model,UNet):
+                model.grad_backbone(False)
+            else:
+                for param in model.backbone.parameters():
+                    param.requires_grad = False
 
         # -------------------------------------------------------------------#
         #   如果不冻结训练的话，直接设置batch_size为Unfreeze_batch_size
@@ -411,8 +399,8 @@ def main():
         if backbone == "xception":
             lr_limit_max = 1e-4 if optimizer_type == 'adam' else 1e-1
             lr_limit_min = 1e-4 if optimizer_type == 'adam' else 5e-4
-        Init_lr_fit = min(max(batch_size / nbs * Init_lr, lr_limit_min), lr_limit_max)
-        Min_lr_fit = min(max(batch_size / nbs * Min_lr, lr_limit_min * 1e-2), lr_limit_max * 1e-2)
+        Init_lr_fit = min(max(batch_size / nbs * init_lr, lr_limit_min), lr_limit_max)
+        Min_lr_fit = min(max(batch_size / nbs * min_lr, lr_limit_min * 1e-2), lr_limit_max * 1e-2)
 
         # ---------------------------------------#
         #   根据optimizer_type选择优化器
@@ -490,20 +478,28 @@ def main():
                 #   判断当前batch_size，自适应调整学习率
                 # -------------------------------------------------------------------#
                 nbs = 16
-                lr_limit_max = 5e-4 if optimizer_type == 'adam' else 1e-1
-                lr_limit_min = 3e-4 if optimizer_type == 'adam' else 5e-4
+
+                if ARCH.lower()=="unet":
+                    lr_limit_max = 1e-4 if optimizer_type == 'adam' else 1e-1
+                    lr_limit_min = 1e-4 if optimizer_type == 'adam' else 5e-4
+                else:
+                    lr_limit_max = 5e-4 if optimizer_type == 'adam' else 1e-1
+                    lr_limit_min = 3e-4 if optimizer_type == 'adam' else 5e-4
                 if backbone == "xception":
                     lr_limit_max = 1e-4 if optimizer_type == 'adam' else 1e-1
                     lr_limit_min = 1e-4 if optimizer_type == 'adam' else 5e-4
-                Init_lr_fit = min(max(batch_size / nbs * Init_lr, lr_limit_min), lr_limit_max)
-                Min_lr_fit = min(max(batch_size / nbs * Min_lr, lr_limit_min * 1e-2), lr_limit_max * 1e-2)
+                Init_lr_fit = min(max(batch_size / nbs * init_lr, lr_limit_min), lr_limit_max)
+                Min_lr_fit = min(max(batch_size / nbs * min_lr, lr_limit_min * 1e-2), lr_limit_max * 1e-2)
                 # ---------------------------------------#
                 #   获得学习率下降的公式
                 # ---------------------------------------#
                 lr_scheduler_func = get_lr_scheduler(lr_decay_type, Init_lr_fit, Min_lr_fit, unfreeze_epoch)
 
-                for param in model.backbone.parameters():
-                    param.requires_grad = True
+                if isinstance(model,UNet):
+                    model.grad_backbone(True)
+                else:
+                    for param in model.backbone.parameters():
+                        param.requires_grad = True
 
                 epoch_step = num_train // batch_size
                 epoch_step_val = num_val // batch_size

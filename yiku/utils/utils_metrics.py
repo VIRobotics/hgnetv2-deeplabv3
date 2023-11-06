@@ -8,7 +8,13 @@ import torch
 import torch.nn.functional as F
 from PIL import Image
 from distutils.version import LooseVersion
+try:
+    from rich import print
+except ImportError:
+    import warnings
 
+    warnings.filterwarnings('ignore', message="Setuptools is replacing distutils.", category=UserWarning)
+    from pip._vendor.rich import print
 def f_score(inputs, target, beta=1, smooth=1e-5, threhold=0.5):
     n, c, h, w = inputs.size()
     nt, ht, wt, ct = target.size()

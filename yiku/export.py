@@ -9,8 +9,8 @@ sys.path.append(os.getcwd())
 from nets.labs import Labs
 from pathlib import Path
 
-def export_onnx(net,f,imgsz=512,**kwargs):
-    f=f+".onnx"
+def export_onnx(net,f:Path,imgsz=512,**kwargs):
+    f=f.with_suffix(".onnx")
     batch=kwargs["batch"]
     if batch>0:
         im = torch.zeros(batch, imgsz,imgsz, 3).to('cpu')

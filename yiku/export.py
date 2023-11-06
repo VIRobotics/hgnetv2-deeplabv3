@@ -112,10 +112,6 @@ def main():
         config["base"]={}
         config["advance"] = {}
     CONFIG_DIR=os.path.dirname(os.path.abspath(args.config))
-    FROZEN_BATCH_SIZE = config["base"].getint("frozen_batch-size",10)
-    FROZEN_EPOCH = config["base"].getint("frozen_epoch",75)
-    UNFROZEN_BATCH_SIZE = config["base"].getint("unfrozen_batch-size",6)
-    UNFROZEN_EPOCH = config["base"].getint("unfrozen_epoch",100)
     IMGSZ= config["base"].getint("image_size",512)
     DATASET_PATH = config["base"].get("dataset_path", 'VOCdevkit')
     if not os.path.isabs(DATASET_PATH):
@@ -129,16 +125,19 @@ def main():
 
     if "advance" not in config:
         config["advance"] = {}
-    INIT_LR = config["advance"].getfloat("init_lr",7e-3)
-    MIN_LR_MULTIPLY = config["advance"].getfloat("min_lr_mutliply",0.01)
+
     DOWNSAMPLE_FACTOR = config["advance"].getint("downsample_factor",16)
-    DICE_LOSS= config["advance"].getboolean("dice_loss",True)
-    FOCAL_LOSS = config["advance"].getboolean("focal_loss", False)
+    ARCH = config["base"].get("arch", "lab")
     FORMATS=args.format
     model_path = os.path.join(SAVE_PATH, "best_epoch_weights.pth")
     if args.model and os.path.isfile(str(args.model)):
         model_path=str(args.model)
-    net = Labs(num_classes=NUM_CLASSES, backbone=BACKBONE,
+
+    if ARCH.lower()=="unet":
+        from nets.third_party.UNet import UNet
+        net=UNet(num_classes=NUM_CLASSES,pretrained=False)
+    else:
+        net = Labs(num_classes=NUM_CLASSES, backbone=BACKBONE,
                downsample_factor=DOWNSAMPLE_FACTOR, pretrained=False, header=PP, img_sz=[IMGSZ,IMGSZ])
     device = torch.device('cpu')
     net.load_state_dict(torch.load(model_path, map_location=device))

@@ -48,8 +48,7 @@ import configparser
 import argparse
 import sys,os
 sys.path.append(os.getcwd())
-from config import LabConfig,UNetConfig
-from nets.third_party.UNet import UNet
+from config import LabConfig,UNetConfig,PSPNetConfig
 import signal
 def signal_handler(signal, frame):
     print("操作取消 Operation Cancelled")
@@ -69,6 +68,8 @@ def main():
     ARCH = config["base"].get("arch", "lab")
     if ARCH.lower() == "unet":
         hyp_cfg = UNetConfig()
+    elif ARCH.lower() == "pspnet":
+        hyp_cfg=PSPNetConfig()
     else:
         hyp_cfg = LabConfig()
 
@@ -271,7 +272,12 @@ def main():
             download_weights(backbone)
 
     if ARCH.lower()=="unet":
+        from nets.third_party.UNet import UNet
         model=UNet(num_classes=num_classes,pretrained=pretrained)
+    elif ARCH.lower()=="pspnet":
+        from nets.third_party.PSPNet import PSPNet
+        model=PSPNet(num_classes=num_classes, backbone=backbone, downsample_factor=downsample_factor,
+                 pretrained=pretrained)
     else:
         model = Labs(num_classes=num_classes, backbone=backbone, downsample_factor=downsample_factor,
                  pretrained=pretrained, header=pp)

@@ -14,3 +14,12 @@ class UNetConfig(object):
     momentum = 0.9
     weight_decay = 0
     lr_decay_type = 'cos'
+
+
+class PSPNetConfig(object):
+    init_lr = 1e-2
+    min_lr_mutliply = 0.01
+    optimizer_type = "sgd"
+    momentum = 0.9
+    weight_decay = 1e-4
+    lr_decay_type = 'cos'

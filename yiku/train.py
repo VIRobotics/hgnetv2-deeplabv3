@@ -323,6 +323,7 @@ def main():
         if RESUME:
             loss_history.val_loss=meta["val_his_loss"]
             loss_history.losses=meta["his_loss"]
+            loss_history.miou = meta["miou"]
     else:
         loss_history = None
 
@@ -459,7 +460,10 @@ def main():
             raise ValueError("数据集过小，无法继续进行训练，请扩充数据集。")
 
 
-        DS_File,DS_Class=CUSTOM_DS.split(":")
+        if CUSTOM_DS:
+            DS_File,DS_Class=CUSTOM_DS.split(":")
+        else:
+            DS_File, DS_Class=False,""
         if DS_File and Path(DS_File).is_file() and Path(DS_File).suffix==".py":
             from importlib.util import spec_from_file_location
             from importlib.util import module_from_spec

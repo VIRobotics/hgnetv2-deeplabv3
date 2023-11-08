@@ -47,6 +47,7 @@ class LossHistory():
         self.log_dir    = log_dir
         self.losses     = []
         self.val_loss   = []
+        self.miou=[]
         
         os.makedirs(self.log_dir)
         #self.writer     = SummaryWriter(self.log_dir)
@@ -56,12 +57,13 @@ class LossHistory():
         except:
             pass
 
-    def append_loss(self, epoch, loss, val_loss):
+    def append_loss(self, epoch, loss, val_loss,miou=0):
         if not os.path.exists(self.log_dir):
             os.makedirs(self.log_dir)
 
         self.losses.append(loss)
         self.val_loss.append(val_loss)
+        self.miou.append(miou)
 
         with open(os.path.join(self.log_dir, "epoch_loss.txt"), 'a') as f:
             f.write(str(loss))
@@ -220,3 +222,52 @@ class EvalCallback():
 
             print("Get miou done.")
             shutil.rmtree(self.miou_out_path)
+            return temp_miou
+
+        else:
+            self.net = model_eval
+            gt_dir = os.path.join(self.dataset_path, "VOC2007/SegmentationClass/")
+            pred_dir = os.path.join(self.miou_out_path, 'detection-results')
+            if not os.path.exists(self.miou_out_path):
+                os.makedirs(self.miou_out_path)
+            if not os.path.exists(pred_dir):
+                os.makedirs(pred_dir)
+            for image_id in track(self.image_ids[:128], description="Fast mIoU"):
+                # -------------------------------#
+                #   从文件中读取图像
+                # -------------------------------#
+                image_path = os.path.join(self.dataset_path, "VOC2007/JPEGImages/" + image_id + ".jpg")
+                image = Image.open(image_path)
+                # ------------------------------#
+                #   获得预测txt
+                # ------------------------------#
+                image = self.get_miou_png(image)
+                image.save(os.path.join(pred_dir, image_id + ".png"))
+
+            print("Calculate miou.")
+            _, IoUs, _, _ = compute_mIoU(gt_dir, pred_dir, self.image_ids, self.num_classes, None)  # 执行计算mIoU的函数
+            temp_miou = np.nanmean(IoUs) * 100
+
+            self.mious.append(temp_miou)
+            self.epoches.append(epoch)
+
+            with open(os.path.join(self.log_dir, "epoch_miou.txt"), 'a') as f:
+                f.write(str(temp_miou))
+                f.write("\n")
+
+            plt.figure()
+            plt.plot(self.epoches, self.mious, 'red', linewidth=2, label='train miou')
+
+            plt.grid(True)
+            plt.xlabel('Epoch')
+            plt.ylabel('Miou')
+            plt.title('A Miou Curve')
+            plt.legend(loc="upper right")
+
+            plt.savefig(os.path.join(self.log_dir, "epoch_miou.png"))
+            plt.cla()
+            plt.close("all")
+
+            print("Get miou done.")
+            shutil.rmtree(self.miou_out_path)
+            return temp_miou

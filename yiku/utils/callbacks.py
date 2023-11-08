@@ -7,7 +7,7 @@ import torch.nn.functional as F
 matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 import scipy.signal
-
+from random import sample
 import cv2
 import shutil
 import numpy as np
@@ -232,7 +232,12 @@ class EvalCallback():
                 os.makedirs(self.miou_out_path)
             if not os.path.exists(pred_dir):
                 os.makedirs(pred_dir)
-            for image_id in track(self.image_ids[:128], description="Fast mIoU"):
+            if len(self.image_ids)<=128:
+                vds=self.image_ids
+            else:
+                vds = sample(self.image_ids, 128)
+
+            for image_id in track(vds, description="Fast mIoU"):
                 # -------------------------------#
                 #   从文件中读取图像
                 # -------------------------------#

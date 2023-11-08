@@ -108,19 +108,20 @@ def main():
     lr_decay_type = config["advance"].getfloat("lr_decay_type", hyp_cfg.lr_decay_type)
 
     #focal_loss\
-    DS_File, DS_Class = CUSTOM_DS.split(":")
-    if DS_File and Path(DS_File).is_file() and Path(DS_File).suffix==".py":
+    if CUSTOM_DS:
+        DS_File, DS_Class = CUSTOM_DS.split(":")
+        if DS_File and Path(DS_File).is_file() and Path(DS_File).suffix==".py":
 
-        print("[red bold]:warning: :warning: :warning: 你正在导入自定义的数据加载器，这可能包含恶意代码")
-        print("[red bold]:warning: :warning: :warning: You are importing a custom DatasetsLoader, which may contain malicious code")
+            print("[red bold]:warning: :warning: :warning: 你正在导入自定义的数据加载器，这可能包含恶意代码")
+            print("[red bold]:warning: :warning: :warning: You are importing a custom DatasetsLoader, which may contain malicious code")
 
-        print(
+            print(
             "[yellow bold]:warning: :warning: :warning: 将会等待5秒，如果需要取消操作 请ctrl+c终止程序")
-        print(
+            print(
             "[yellow bold]:warning: :warning: :warning: Will waitting 5s，if you need cancel，press Ctrl+C")
-        signal.signal(signal.SIGINT, signal_handler)
-        time.sleep(5)
-        print("-------")
+            signal.signal(signal.SIGINT, signal_handler)
+            time.sleep(5)
+            print("-------")
 
 
     # ---------------------------------#

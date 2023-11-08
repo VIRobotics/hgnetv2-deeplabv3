@@ -142,6 +142,7 @@ def main():
     CONFIG_DIR = os.path.dirname(os.path.abspath(args.config))
     IMGSZ = config["base"].getint("image_size", 512)
     SAVE_PATH = os.path.join(CONFIG_DIR, config["base"].get("save_path"))
+    ARCH = config["base"].get("arch", "lab")
     if not os.path.isabs(SAVE_PATH):
         SAVE_PATH = os.path.join(CONFIG_DIR, SAVE_PATH)
 
@@ -154,7 +155,7 @@ def main():
     mode=auto_input_type(str(args.input))
     if mode:
         m = DeeplabV3(num_classes=NUM_CLASSES, backbone=BACKBONE, model_path=model_path
-                            , pp=PP, cuda=torch.cuda.is_available(),input_shape=[IMGSZ,IMGSZ])
+                            , pp=PP, cuda=torch.cuda.is_available(),input_shape=[IMGSZ,IMGSZ],arch=ARCH)
         func_se={"dir_predict":dir_predict,"pic_predict":pic_predict,"video_predict":video_predict,"http_predict":http_predict}
         o=Path(SAVE_PATH)/("result_%s"%mode)
         os.makedirs(o,exist_ok=True)

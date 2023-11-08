@@ -110,7 +110,14 @@ class DeeplabV3(object):
         # -------------------------------#
         #   载入模型与权值
         # -------------------------------#
-        self.net = Labs(num_classes=self.num_classes, backbone=self.backbone,
+
+        if hasattr(self,"arch") and self.arch.lower=="unet":
+            from yiku.nets.third_party.UNet import UNet
+            self.net = UNet(num_classes=self.num_classes, backbone=self.backbone,
+                            downsample_factor=self.downsample_factor, pretrained=True, header=self.pp,
+                            img_sz=self.input_shape)
+        else:
+            self.net = Labs(num_classes=self.num_classes, backbone=self.backbone,
                            downsample_factor=self.downsample_factor, pretrained=True,header=self.pp,img_sz=self.input_shape)
 
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

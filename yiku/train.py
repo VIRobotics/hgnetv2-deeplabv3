@@ -540,7 +540,7 @@ def main():
                 # ---------------------------------------#
                 lr_scheduler_func = get_lr_scheduler(lr_decay_type, Init_lr_fit, Min_lr_fit, unfreeze_epoch)
 
-                if isinstance(model,UNet):
+                if hasattr(model,"grad_backbone"):
                     model.grad_backbone(True)
                 else:
                     for param in model.backbone.parameters():

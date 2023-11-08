@@ -1,3 +1,4 @@
+import cv2
 import numpy as np
 from PIL import Image
 import os
@@ -18,8 +19,8 @@ def cvtColor(image):
     if len(np.shape(image)) == 3 and np.shape(image)[2] == 3:
         return image
     else:
-        image = image.convert('RGB')
-        return image
+        return cv2.cvtColor(image,cv2.COLOR_GRAY2BGR)
+
 
     # ---------------------------------------------------#
 

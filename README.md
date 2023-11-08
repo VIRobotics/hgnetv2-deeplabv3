@@ -1,17 +1,6 @@
 ## Torch版的语义分割全家桶（TransLab DeepLabv3+ Unet一键训练与导出）
 ---
 
-### 目录
-
-1. [仓库更新 Top News](#仓库更新)
-2. [相关仓库 Related code](#相关仓库)
-3. [性能情况 Performance](#性能情况)
-4. [所需环境 Environment](#所需环境)
-5. [文件下载 Download](#文件下载)
-6. [训练步骤 How2train](#训练步骤)
-7. [预测步骤 How2predict](#预测步骤)
-8. [评估步骤 miou](#评估步骤)
-9. [参考资料 Reference](#Reference)
 
 ## Top News
 
@@ -55,37 +44,11 @@ BiliBili视频中的原仓库地址为：https://github.com/bubbliiiing/deeplabv
 **`2020-08`**:**创建仓库、支持多backbone、支持数据miou评估、标注数据处理、大量注释等。**
 </details>
 
-## 相关仓库
+### 模型文档
 
-| 模型         | 路径                                                    |
-|:-----------|:------------------------------------------------------|
-| Unet       | https://github.com/bubbliiiing/unet-pytorch           |
-| PSPnet     | https://github.com/bubbliiiing/pspnet-pytorch         |
-| deeplabv3+ | https://github.com/bubbliiiing/deeplabv3-plus-pytorch |
-| hrnet      | https://github.com/bubbliiiing/hrnet-pytorch          |
+[unet系列](./doc/unet.md)
 
-### 性能情况
-
-|   训练数据集   |                                                             权值文件名称                                                              |   测试数据集   | 输入图片大小  | mIOU  | 
-|:---------:|:-------------------------------------------------------------------------------------------------------------------------------:|:---------:|:-------:|:-----:| 
-| VOC12+SBD | [deeplab_mobilenetv2.pth](https://github.com/bubbliiiing/deeplabv3-plus-pytorch/releases/download/v1.0/deeplab_mobilenetv2.pth) | VOC-Val12 | 512x512 | 72.59 | 
-| VOC12+SBD |    [deeplab_xception.pth](https://github.com/bubbliiiing/deeplabv3-plus-pytorch/releases/download/v1.0/deeplab_xception.pth)    | VOC-Val12 | 512x512 | 76.95 | 
-| VOC12+SBD |                  [deeplab_hgnetv2.pth](http://dl.aiblockly.com:8145/pretrained-model/seg/deeplab_hgnetv2.pth)                   | VOC-Val12 | 512x512 | 78.83 |
-| VOC12+SBD |                  [translab_hgnetv2.pth](https://github.com/VIRobotics/hgnetv2-deeplabv3/releases/tag/v0.0.2-beta)                 | VOC-Val12 | 512x512 | 80.23 |
-
-#### 目前该项目支持的主干网络有
-
-MobileNetv2 MobileNetv3 XCeption HGNetv2(HGNet由百度开发，仪酷智能接入deeplab)，
-
-YOLOv8(S和M尺寸，目前存在低mIOU的问题，不推荐)
-
-#### 目前该项目支持的分割头有
-
-官方Deeplabv3+的头（采用ASPP)
-
-仪酷智能科技的TransLab头(采用AIFI Transformer) 
-
-您可以自由的组合主干和分割头
+[lab系列](./doc/lab.md)
 
 
 
@@ -93,17 +56,7 @@ YOLOv8(S和M尺寸，目前存在低mIOU的问题，不推荐)
 
 参看requirements.txt
 
-### 文件下载
 
-比较新的deeplab_HGNetv2由仪酷智能科技提供 [链接](http://dl.aiblockly.com:8145/pretrained-model/seg/deeplab_hgnetv2.pth)
-
-```SHA256: D5DD6AB2556F87B8F03F12CCC14DCBEBADF01123003E1FBF3DB749D6477DBF8F```
-
-训练所需的deeplab_mobilenetv2.pth和deeplab_xception.pth可在百度网盘中下载。     
-链接: https://pan.baidu.com/s/1IQ3XYW-yRWQAy7jxCUHq8Q 提取码: qqq4
-
-VOC拓展数据集的百度网盘如下：  
-链接: https://pan.baidu.com/s/1vkk3lMheUm6IjTXznlg7Ng 提取码: 44mk
 
 ### 训练步骤
 

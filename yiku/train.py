@@ -1,4 +1,6 @@
 import datetime
+import time
+
 import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
@@ -13,7 +15,14 @@ from utils.callbacks import LossHistory, EvalCallback
 from utils.dataloader import DeeplabDataset, deeplab_dataset_collate
 from utils.utils import download_weights, show_config
 from utils.utils_fit import fit_one_epoch
+from pathlib import Path
+try:
+    from rich import print,emoji
+except ImportError:
+    import warnings
 
+    warnings.filterwarnings('ignore', message="Setuptools is replacing distutils.", category=UserWarning)
+    from pip._vendor.rich import print,emoji
 '''
 训练自己的语义分割模型一定需要注意以下几点：
 1、训练前仔细检查自己的格式是否满足要求，该库要求数据集格式为VOC格式，需要准备好的内容有输入图片和标签
@@ -39,10 +48,11 @@ import configparser
 import argparse
 import sys,os
 sys.path.append(os.getcwd())
-from config import LabConfig,UNetConfig
-from nets.third_party.UNet import UNet
-
-
+from config import LabConfig,UNetConfig,PSPNetConfig
+import signal
+def signal_handler(signal, frame):
+    print("操作取消 Operation Cancelled")
+    sys.exit(0)
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--config',default="config.ini")
@@ -58,6 +68,8 @@ def main():
     ARCH = config["base"].get("arch", "lab")
     if ARCH.lower() == "unet":
         hyp_cfg = UNetConfig()
+    elif ARCH.lower() == "pspnet":
+        hyp_cfg=PSPNetConfig()
     else:
         hyp_cfg = LabConfig()
 
@@ -80,6 +92,8 @@ def main():
     if "advance" not in config:
         config["advance"] = {}
 
+    CUSTOM_DS=config["advance"].get("custom_datasets", None)
+
     DOWNSAMPLE_FACTOR = config["advance"].getint("downsample_factor",16)
     DICE_LOSS= config["advance"].getboolean("dice_loss",True)
     focal_loss = config["advance"].getboolean("focal_loss", False)
@@ -93,7 +107,21 @@ def main():
     weight_decay= config["advance"].getfloat("weight_decay", hyp_cfg.weight_decay)
     lr_decay_type = config["advance"].getfloat("lr_decay_type", hyp_cfg.lr_decay_type)
 
-    #focal_loss
+    #focal_loss\
+    if CUSTOM_DS:
+        DS_File, DS_Class = CUSTOM_DS.split(":")
+        if DS_File and Path(DS_File).is_file() and Path(DS_File).suffix==".py":
+
+            print("[red bold]:warning: :warning: :warning: 你正在导入自定义的数据加载器，这可能包含恶意代码")
+            print("[red bold]:warning: :warning: :warning: You are importing a custom DatasetsLoader, which may contain malicious code")
+
+            print(
+            "[yellow bold]:warning: :warning: :warning: 将会等待5秒，如果需要取消操作 请ctrl+c终止程序")
+            print(
+            "[yellow bold]:warning: :warning: :warning: Will waitting 5s，if you need cancel，press Ctrl+C")
+            signal.signal(signal.SIGINT, signal_handler)
+            time.sleep(5)
+            print("-------")
 
 
     # ---------------------------------#
@@ -245,7 +273,12 @@ def main():
             download_weights(backbone)
 
     if ARCH.lower()=="unet":
+        from nets.third_party.UNet import UNet
         model=UNet(num_classes=num_classes,pretrained=pretrained)
+    elif ARCH.lower()=="pspnet":
+        from nets.third_party.PSPNet import PSPNet
+        model=PSPNet(num_classes=num_classes, backbone=backbone, downsample_factor=downsample_factor,
+                 pretrained=pretrained)
     else:
         model = Labs(num_classes=num_classes, backbone=backbone, downsample_factor=downsample_factor,
                  pretrained=pretrained, header=pp)
@@ -278,7 +311,7 @@ def main():
         if local_rank == 0:
             print("\nSuccessful Load Key:", str(load_key)[:500], "……\nSuccessful Load Key Num:", len(load_key))
             print("\nFail To Load Key:", str(no_load_key)[:500], "……\nFail To Load Key num:", len(no_load_key))
-            print("\n\033[1;33;44m温馨提示，head部分没有载入是正常现象，Backbone部分没有载入是错误的。\033[0m")
+            print("\n[bold blue]温馨提示，head部分没有载入是正常现象，Backbone部分没有载入是错误的。")
 
     # ----------------------#
     #   记录Loss
@@ -290,6 +323,7 @@ def main():
         if RESUME:
             loss_history.val_loss=meta["val_his_loss"]
             loss_history.losses=meta["his_loss"]
+            loss_history.miou = meta["miou"]
     else:
         loss_history = None
 
@@ -379,7 +413,7 @@ def main():
         #   冻结一定部分训练
         # ------------------------------------#
         if freeze_Train:
-            if isinstance(model,UNet):
+            if hasattr(model,"grad_backbone"):
                 model.grad_backbone(False)
             else:
                 for param in model.backbone.parameters():
@@ -425,8 +459,23 @@ def main():
         if epoch_step == 0 or epoch_step_val == 0:
             raise ValueError("数据集过小，无法继续进行训练，请扩充数据集。")
 
-        train_dataset = DeeplabDataset(train_lines, input_shape, num_classes, True, VOCdevkit_path)
-        val_dataset = DeeplabDataset(val_lines, input_shape, num_classes, False, VOCdevkit_path)
+
+        if CUSTOM_DS:
+            DS_File,DS_Class=CUSTOM_DS.split(":")
+        else:
+            DS_File, DS_Class=False,""
+        if DS_File and Path(DS_File).is_file() and Path(DS_File).suffix==".py":
+            from importlib.util import spec_from_file_location
+            from importlib.util import module_from_spec
+            spec = spec_from_file_location(Path(DS_File).name, DS_File )
+            module = module_from_spec(spec)
+            spec.loader.exec_module(module)
+            ds_cls=getattr(module,DS_Class)
+            train_dataset = ds_cls(train_lines, input_shape, num_classes, True, VOCdevkit_path)
+            val_dataset = ds_cls(val_lines, input_shape, num_classes, False, VOCdevkit_path)
+        else:
+            train_dataset = DeeplabDataset(train_lines, input_shape, num_classes, True, VOCdevkit_path)
+            val_dataset = DeeplabDataset(val_lines, input_shape, num_classes, False, VOCdevkit_path)
         if not aug_blur:
             train_dataset.blur=None
         if not aug_hsv:
@@ -495,7 +544,7 @@ def main():
                 # ---------------------------------------#
                 lr_scheduler_func = get_lr_scheduler(lr_decay_type, Init_lr_fit, Min_lr_fit, unfreeze_epoch)
 
-                if isinstance(model,UNet):
+                if hasattr(model,"grad_backbone"):
                     model.grad_backbone(True)
                 else:
                     for param in model.backbone.parameters():

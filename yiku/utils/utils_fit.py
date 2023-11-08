@@ -219,8 +219,8 @@ def fit_one_epoch(model_train, model, loss_history, eval_callback, optimizer, ep
     if local_rank == 0:
         rich_pbar.stop()
         # pbar.close()
-        loss_history.append_loss(epoch + 1, total_loss / epoch_step, val_loss / epoch_step_val)
-        eval_callback.on_epoch_end(epoch + 1, model_train)
+        miou = eval_callback.on_epoch_end(epoch + 1, model_train)
+        loss_history.append_loss(epoch + 1, total_loss / epoch_step, val_loss / epoch_step_val,miou)
         print('📜 [bold]Epoch:' + str(epoch + 1) + '/' + str(Epoch)+
               ': Total Loss: %.3f || Val Loss: %.3f ' % (total_loss / epoch_step, val_loss / epoch_step_val))
         with open(Path(save_dir)/ "logs.csv", 'a+') as f:
@@ -233,13 +233,14 @@ def fit_one_epoch(model_train, model, loss_history, eval_callback, optimizer, ep
         meta = OrderedDict()
         meta["val_his_loss"] = loss_history.val_loss
         meta["his_loss"] = loss_history.losses
+        meta["miou"]=loss_history.miou
         meta["curr_epoch"] = epoch
         meta["epoch_step_val"] = epoch_step_val
         meta["curr_val_loss"] = val_loss
         if (epoch + 1) % save_period == 0 or epoch + 1 == Epoch:
             torch.save(model.state_dict(), Path(save_dir)/('ep%03d-loss%.3f-val_loss%.3f.pth' % (
                 epoch + 1, total_loss / epoch_step, val_loss / epoch_step_val)))
-        if len(loss_history.val_loss) <= 1 or (val_loss / epoch_step_val) <= min(loss_history.val_loss):
+        if len(loss_history.val_loss) <= 1 or miou >= min(loss_history.miou):
             print('⚾ [green1] Save best model to best_epoch_weights.pth')
             torch.save(model.state_dict(), Path(save_dir)/ "best_epoch_weights.pth")
             torch.save(meta, Path(save_dir)/"best.meta")

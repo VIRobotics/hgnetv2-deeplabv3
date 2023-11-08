@@ -1,3 +1,4 @@
+import cv2
 import numpy as np
 from PIL import Image
 import os
@@ -20,6 +21,8 @@ def cvtColor(image):
     else:
         image = image.convert('RGB')
         return image
+        #return cv2.cvtColor(image,cv2.COLOR_GRAY2BGR)
+
 
     # ---------------------------------------------------#
 
@@ -77,6 +80,8 @@ def download_weights(backbone, model_dir=WTS_STORAGE_DIR):
                      "http://dl.aiblockly.com:8145/pretrained-model/seg/hgnetv2x.pt"],
         "yolov8s": ["https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8s-cls.pt"],
         "yolov8m": ["https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8m-cls.pt"],
+        "resnet50":["https://s3.amazonaws.com/pytorch/models/resnet50-19c8e357.pth"],
+        "vgg":["https://download.pytorch.org/models/vgg16-397923af.pth"]
 
     }
     urls = download_urls[backbone]

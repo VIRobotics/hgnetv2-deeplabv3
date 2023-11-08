@@ -11,11 +11,16 @@ from pathlib import Path
 
 def export_onnx(net,f:Path,imgsz=512,**kwargs):
     f=f.with_suffix(".onnx")
+    if kwargs.get("no_pre",False):
+        f=Path(str(f).replace(f.stem,f.stem+"+no_pre"))
+    if kwargs.get("no_post",False):
+        f=Path(str(f).replace(f.stem,f.stem+"+no_post"))
     batch=kwargs["batch"]
-    if batch>0:
-        im = torch.zeros(batch, imgsz,imgsz, 3).to('cpu')
+    if batch<=0:batch=1
+    if kwargs.get("no_pre", False):
+        im = torch.zeros(batch, 3, imgsz,imgsz).to('cpu')
     else:
-        im = torch.zeros(1, imgsz,imgsz, 3).to('cpu')
+        im = torch.zeros(batch, imgsz, imgsz, 3).to('cpu')
     input_layer_names = ["images"]
     output_layer_names = ["output"]
 
@@ -25,11 +30,13 @@ def export_onnx(net,f:Path,imgsz=512,**kwargs):
             self.m = m
 
         def forward(self, x):
-            x = x.permute(0, 3, 1, 2)
-            x = x / 255.0
+            if not kwargs.get("no_pre", False):
+                x = x.permute(0, 3, 1, 2)
+                x = x / 255.0
             pr = self.m(x)
-            pr = F.softmax(pr.permute(0, 2, 3, 1), dim=-1)
-            pr = torch.argmax(pr, -1)
+            if not kwargs.get("no_ost", False):
+                pr = F.softmax(pr.permute(0, 2, 3, 1), dim=-1)
+                pr = torch.argmax(pr, -1)
             return pr
     net=Net_with_post(net)
     if batch<=0:
@@ -104,6 +111,8 @@ def main():
     parser.add_argument('--half', action='store_true',help="set this flag to export fp16 ov model")
     parser.add_argument("-b",'--batch', type=int,default=1,help="batch,set -1 for dynamic batch")
     parser.add_argument("-m", '--model', default=None, help=".pth model path to override config file")
+    parser.add_argument('--no-pre', action='store_true', help="Skip Preproccess")
+    parser.add_argument('--no-post', action='store_true', help="Skip Postproccess")
     config = configparser.ConfigParser()
     args = parser.parse_args()
     if os.path.exists(args.config):
@@ -145,7 +154,9 @@ def main():
     mod = sys.modules[__name__]
     for format in FORMATS:
         func = getattr(mod, "export_"+format)
-        func(net,Path(SAVE_PATH)/Path(model_path).name,IMGSZ,fp16=args.half,batch=args.batch)
+        func(net,Path(SAVE_PATH)/Path(model_path).name,IMGSZ,fp16=args.half,batch=args.batch,
+             no_pre=args.no_pre,no_post=args.no_post
+             )
 
 if __name__ == "__main__":
     main()

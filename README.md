@@ -1,17 +1,6 @@
 ## Torch版的语义分割全家桶（TransLab DeepLabv3+ Unet一键训练与导出）
 ---
 
-### 目录
-
-1. [仓库更新 Top News](#仓库更新)
-2. [相关仓库 Related code](#相关仓库)
-3. [性能情况 Performance](#性能情况)
-4. [所需环境 Environment](#所需环境)
-5. [文件下载 Download](#文件下载)
-6. [训练步骤 How2train](#训练步骤)
-7. [预测步骤 How2predict](#预测步骤)
-8. [评估步骤 miou](#评估步骤)
-9. [参考资料 Reference](#Reference)
 
 ## Top News
 

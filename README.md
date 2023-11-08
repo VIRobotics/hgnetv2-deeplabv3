@@ -55,7 +55,7 @@ BiliBili视频中的原仓库地址为：https://github.com/bubbliiiing/deeplabv
 **`2020-08`**:**创建仓库、支持多backbone、支持数据miou评估、标注数据处理、大量注释等。**
 </details>
 
-## 模型
+## 模型文档
 
 [unet系列](./doc/unet.md)
 

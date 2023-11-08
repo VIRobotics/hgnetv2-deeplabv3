@@ -412,7 +412,7 @@ def main():
         #   冻结一定部分训练
         # ------------------------------------#
         if freeze_Train:
-            if isinstance(model,UNet):
+            if hasattr(model,"grad_backbone"):
                 model.grad_backbone(False)
             else:
                 for param in model.backbone.parameters():

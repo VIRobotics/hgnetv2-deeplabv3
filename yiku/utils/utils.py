@@ -19,7 +19,9 @@ def cvtColor(image):
     if len(np.shape(image)) == 3 and np.shape(image)[2] == 3:
         return image
     else:
-        return cv2.cvtColor(image,cv2.COLOR_GRAY2BGR)
+        image = image.convert('RGB')
+        return image
+        #return cv2.cvtColor(image,cv2.COLOR_GRAY2BGR)
 
 
     # ---------------------------------------------------#

@@ -153,7 +153,9 @@ def main():
     mod = sys.modules[__name__]
     for format in FORMATS:
         func = getattr(mod, "export_"+format)
-        func(net,Path(SAVE_PATH)/Path(model_path).name,IMGSZ,fp16=args.half,batch=args.batch)
+        func(net,Path(SAVE_PATH)/Path(model_path).name,IMGSZ,fp16=args.half,batch=args.batch,
+             no_pre=args.no_pre,no_post=args.no_post
+             )
 
 if __name__ == "__main__":
     main()

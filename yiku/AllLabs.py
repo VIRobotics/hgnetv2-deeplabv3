@@ -111,7 +111,7 @@ class DeeplabV3(object):
         #   载入模型与权值
         # -------------------------------#
 
-        if hasattr(self,"arch") and self.arch.lower=="unet":
+        if hasattr(self,"arch") and self.arch.lower()=="unet":
             from yiku.nets.third_party.UNet import UNet
             self.net = UNet(num_classes=self.num_classes, backbone=self.backbone,
                             downsample_factor=self.downsample_factor, pretrained=True, header=self.pp,

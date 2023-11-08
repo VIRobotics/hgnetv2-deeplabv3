@@ -16,10 +16,11 @@ def export_onnx(net,f:Path,imgsz=512,**kwargs):
     if kwargs.get("no_post",False):
         f=Path(str(f).replace(f.stem,f.stem+"+no_post"))
     batch=kwargs["batch"]
-    if batch>0:
-        im = torch.zeros(batch, imgsz,imgsz, 3).to('cpu')
+    if batch<=0:batch=1
+    if kwargs.get("no_pre", False):
+        im = torch.zeros(batch, 3, imgsz,imgsz).to('cpu')
     else:
-        im = torch.zeros(1, imgsz,imgsz, 3).to('cpu')
+        im = torch.zeros(batch, imgsz, imgsz, 3).to('cpu')
     input_layer_names = ["images"]
     output_layer_names = ["output"]
 

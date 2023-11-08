@@ -243,8 +243,6 @@ class EvalCallback():
                 # ------------------------------#
                 image = self.get_miou_png(image)
                 image.save(os.path.join(pred_dir, image_id + ".png"))
-
-            print("Calculate miou.")
             _, IoUs, _, _ = compute_mIoU(gt_dir, pred_dir, self.image_ids, self.num_classes, None)  # 执行计算mIoU的函数
             temp_miou = np.nanmean(IoUs) * 100
 
@@ -267,7 +265,5 @@ class EvalCallback():
             plt.savefig(os.path.join(self.log_dir, "epoch_miou.png"))
             plt.cla()
             plt.close("all")
-
-            print("Get miou done.")
             shutil.rmtree(self.miou_out_path)
             return temp_miou

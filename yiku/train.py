@@ -513,10 +513,11 @@ def main():
         #   开始模型训练
         # ---------------------------------------#
         import csv
-        with open(os.path.join(save_dir,"logs.csv"),'w') as f:
-            csv_write = csv.writer(f)
-            csv_head = ["Epoch","TotalLoss", "ValLoss"]
-            csv_write.writerow(csv_head)
+        if not RESUME:
+            with open(os.path.join(save_dir, "logs.csv"), 'w') as f:
+                csv_write = csv.writer(f)
+                csv_head = ["Epoch", "TotalLoss", "ValLoss","mIoU","mPA"]
+                csv_write.writerow(csv_head)
         for epoch in range(init_epoch, unfreeze_epoch):
             # ---------------------------------------#
             #   如果模型有冻结学习部分

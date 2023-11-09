@@ -34,11 +34,6 @@ class Labs(nn.Module):
         self.header = headerfunc(H, W, num_classes, low_level_channels, in_channels,use_c2f=kwargs.get("use_c2f",False))
 
     def forward(self, x):
-        # -----------------------------------------#
-        if None is self.warp:
-            low_level_features, x = self.backbone(x)
-        # print(low_level_features.shape, x.shape)
-            x = self.header(low_level_features, x)
-        elif isinstance(self.warp,nn.Module):
-            x=self.warp(x)
+        low_level_features, x = self.backbone(x)
+        x = self.header(low_level_features, x)
         return x

@@ -4,7 +4,7 @@ import torch.utils.model_zoo as model_zoo
 import torch.nn as nn
 from torch.hub import load_state_dict_from_url
 import torch
-
+from yiku.PATH import WTS_STORAGE_DIR
 class VGG(nn.Module):
     def __init__(self, features, num_classes=1000):
         super(VGG, self).__init__()
@@ -257,7 +257,7 @@ def resnet50(pretrained=False, **kwargs):
     model = ResNet(Bottleneck, [3, 4, 6, 3], **kwargs)
     if pretrained:
         model.load_state_dict(
-            model_zoo.load_url('https://s3.amazonaws.com/pytorch/models/resnet50-19c8e357.pth', model_dir='model_data'),
+            torch.load(WTS_STORAGE_DIR/"resnet50-19c8e357.pth"),
             strict=False)
 
     del model.avgpool

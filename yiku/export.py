@@ -144,7 +144,7 @@ def main():
 
     if ARCH.lower()=="unet":
         from nets.third_party.UNet import UNet
-        net=UNet(num_classes=NUM_CLASSES,pretrained=False)
+        net=UNet(num_classes=NUM_CLASSES,pretrained=False,backbone=BACKBONE)
     else:
         net = Labs(num_classes=NUM_CLASSES, backbone=BACKBONE,
                downsample_factor=DOWNSAMPLE_FACTOR, pretrained=False, header=PP, img_sz=[IMGSZ,IMGSZ])

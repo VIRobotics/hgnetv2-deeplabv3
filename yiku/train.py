@@ -18,11 +18,13 @@ from utils.utils_fit import fit_one_epoch
 from pathlib import Path
 try:
     from rich import print,emoji
+    from rich.console import Console
 except ImportError:
     import warnings
 
     warnings.filterwarnings('ignore', message="Setuptools is replacing distutils.", category=UserWarning)
     from pip._vendor.rich import print,emoji
+    from pip._vendor.rich.console import Console
 '''
 训练自己的语义分割模型一定需要注意以下几点：
 1、训练前仔细检查自己的格式是否满足要求，该库要求数据集格式为VOC格式，需要准备好的内容有输入图片和标签
@@ -274,7 +276,7 @@ def main():
 
     if ARCH.lower()=="unet":
         from nets.third_party.UNet import UNet
-        model=UNet(num_classes=num_classes,pretrained=pretrained)
+        model=UNet(num_classes=num_classes,pretrained=pretrained,backbone=backbone)
     elif ARCH.lower()=="pspnet":
         from nets.third_party.PSPNet import PSPNet
         model=PSPNet(num_classes=num_classes, backbone=backbone, downsample_factor=downsample_factor,
@@ -376,7 +378,7 @@ def main():
             Init_Epoch=init_epoch, Freeze_Epoch=freeze_epoch, UnFreeze_Epoch=unfreeze_epoch,
             Freeze_batch_size=freeze_batch_size, Unfreeze_batch_size=unfreeze_batch_size, Freeze_Train=freeze_Train,
             init_lr=init_lr, min_lr=min_lr, optimizer_type=optimizer_type, momentum=momentum,
-            lr_decay_type=lr_decay_type,
+            lr_decay_type=lr_decay_type,arch=ARCH,
             save_period=save_period, save_dir=save_dir, num_workers=num_workers, num_train=num_train, num_val=num_val
         )
         # ---------------------------------------------------------#
@@ -391,12 +393,12 @@ def main():
             if num_train // unfreeze_batch_size == 0:
                 raise ValueError('数据集过小，无法进行训练，请扩充数据集。')
             wanted_epoch = wanted_step // (num_train // unfreeze_batch_size) + 1
-            print("\n\033[1;33;44m[Warning] 使用%s优化器时，建议将训练总步长设置到%d以上。\033[0m" % (
+            print("\n:warning: 使用%s优化器时，建议将训练总步长设置到%d以上。:warning: " % (
                 optimizer_type, wanted_step))
             print(
-                "\033[1;33;44m[Warning] 本次运行的总训练数据量为%d，Unfreeze_batch_size为%d，共训练%d个Epoch，计算出总训练步长为%d。\033[0m" % (
+                ":warning:  本次运行的总训练数据量为%d，Unfreeze_batch_size为%d，共训练%d个Epoch，计算出总训练步长为%d。 :warning: " % (
                     num_train, unfreeze_batch_size, unfreeze_epoch, total_step))
-            print("\033[1;33;44m[Warning] 由于总训练步长为%d，小于建议总步长%d，建议设置总世代为%d。\033[0m" % (
+            print(":warning:  由于总训练步长为%d，小于建议总步长%d，建议设置总世代为%d。 :warning: " % (
                 total_step, wanted_step, wanted_epoch))
 
     # ------------------------------------------------------#
@@ -576,6 +578,11 @@ def main():
             fit_one_epoch(model_train, model, loss_history, eval_callback, optimizer, epoch,
                           epoch_step, epoch_step_val, gen, gen_val, unfreeze_epoch, cuda, dice_loss, focal_loss,
                           cls_weights, num_classes, fp16, scaler, save_period, save_dir, local_rank)
+            c = Console()
+            c.rule()
+            del c
+
+
 
             if distributed:
                 dist.barrier()

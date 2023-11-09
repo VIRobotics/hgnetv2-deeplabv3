@@ -184,7 +184,7 @@ class EvalCallback():
                 os.makedirs(self.miou_out_path)
             if not os.path.exists(pred_dir):
                 os.makedirs(pred_dir)
-            for image_id in track(self.image_ids,description="geting mIoU"):
+            for image_id in track(self.image_ids,description="getting mIoU"):
                 #-------------------------------#
                 #   从文件中读取图像
                 #-------------------------------#

@@ -17,12 +17,37 @@ import torch
 import os
 
 
+try:
+    from rich.progress import (
+        BarColumn,
+        DownloadColumn,
+        Progress,
+        SpinnerColumn,
+        TaskProgressColumn,track,
+        TimeElapsedColumn,
+        TimeRemainingColumn)
+    from rich import print
+except ImportError:
+    import warnings
+
+    warnings.filterwarnings('ignore', message="Setuptools is replacing distutils.", category=UserWarning)
+    from pip._vendor.rich.progress import (
+        BarColumn,
+        DownloadColumn,
+        Progress,
+        SpinnerColumn,track,
+        TaskProgressColumn,
+        TimeElapsedColumn,
+        TimeRemainingColumn
+    )
+    from pip._vendor.rich import print
+
+
 def dir_predict(m,i,o,**kwargs):
     import os
-    from tqdm import tqdm
 
     img_names = os.listdir(i)
-    for img_name in tqdm(img_names):
+    for img_name in track(img_names,description="Predicting"):
         if img_name.lower().endswith(
                 ('.bmp', '.dib', '.png', '.jpg', '.jpeg', '.pbm', '.pgm', '.ppm', '.tif', '.tiff')):
             image_path = os.path.join(i, img_name)
@@ -126,12 +151,41 @@ def auto_input_type(path:str):
         mode="http_predict"
 
     return mode
+
+def get_miou(miou_mode,pred_dir,m:DeeplabV3,ds_dir,num_classes,name_classes):
+    image_ids = open(os.path.join(ds_dir, "VOC2007/ImageSets/Segmentation/val.txt"),
+                     'r').read().splitlines()
+    gt_dir = os.path.join(ds_dir, "VOC2007/SegmentationClass/")
+    if miou_mode == 0 or miou_mode == 1:
+        if not os.path.exists(pred_dir):
+            os.makedirs(pred_dir)
+
+
+        print("Load model.")
+        deeplab = m
+        print("Load model done.")
+
+        print("Get predict result.")
+        for image_id in track(image_ids):
+            image_path = os.path.join(ds_dir, "VOC2007/JPEGImages/" + image_id + ".jpg")
+            image = Image.open(image_path)
+            image = deeplab.get_miou_png(image)
+            image.save(os.path.join(pred_dir, image_id + ".png"))
+        print("Get predict result done.")
+
+    if miou_mode == 0 or miou_mode == 2:
+        print("Get miou.")
+        from utils.utils_metrics import compute_mIoU
+        hist, IoUs, PA_Recall, Precision = compute_mIoU(gt_dir, pred_dir, image_ids, num_classes,
+                                                        name_classes)  # 执行计算mIoU的函数
+        print("Get miou done.")
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--config', default="config.ini")
     parser.add_argument('-i', '--input', default=ASSETS/"amp-test.jpg",help="input to be inferenced ,Accept file dir cameraindex,and uri")
     parser.add_argument( '--show',action="store_true",help="flag to enable playback")
     parser.add_argument("-m", '--model', default=None, help=".pth model path to override config file")
+    parser.add_argument('--get-miou',  type=int, default=-1,help="-1,0,1,2 -1:disable ")
     config = configparser.ConfigParser()
     args = parser.parse_args()
     if os.path.exists(args.config):
@@ -150,12 +204,22 @@ def main():
     PP = config["base"].get("header", "transformer")
     NUM_CLASSES = config["base"].getint("num_classes", 21)
     model_path = os.path.join(SAVE_PATH, "best_epoch_weights.pth")
+    DATASET_PATH = config["base"].get("dataset_path", 'VOCdevkit')
+    if not os.path.isabs(DATASET_PATH):
+        DATASET_PATH = os.path.join(CONFIG_DIR, DATASET_PATH)
     if args.model and os.path.isfile(str(args.model)):
         model_path=str(args.model)
+    m = DeeplabV3(num_classes=NUM_CLASSES, backbone=BACKBONE, model_path=model_path
+                  , pp=PP, cuda=torch.cuda.is_available(), input_shape=[IMGSZ, IMGSZ], arch=ARCH)
+
+    if args.get_miou in [0,1,2]:
+        o = Path(SAVE_PATH) / ("result_%s" % "get_miou")
+        os.makedirs(o, exist_ok=True)
+        get_miou(args.get_miou,o,m,DATASET_PATH,num_classes=NUM_CLASSES,name_classes=["+"]*NUM_CLASSES)
+        return
     mode=auto_input_type(str(args.input))
     if mode:
-        m = DeeplabV3(num_classes=NUM_CLASSES, backbone=BACKBONE, model_path=model_path
-                            , pp=PP, cuda=torch.cuda.is_available(),input_shape=[IMGSZ,IMGSZ],arch=ARCH)
+
         func_se={"dir_predict":dir_predict,"pic_predict":pic_predict,"video_predict":video_predict,"http_predict":http_predict}
         o=Path(SAVE_PATH)/("result_%s"%mode)
         os.makedirs(o,exist_ok=True)

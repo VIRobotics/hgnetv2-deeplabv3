@@ -81,7 +81,11 @@ def download_weights(backbone, model_dir=WTS_STORAGE_DIR):
         "yolov8s": ["https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8s-cls.pt"],
         "yolov8m": ["https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8m-cls.pt"],
         "resnet50":["https://s3.amazonaws.com/pytorch/models/resnet50-19c8e357.pth"],
-        "vgg":["https://download.pytorch.org/models/vgg16-397923af.pth"]
+        "vgg":["https://download.pytorch.org/models/vgg16-397923af.pth"],
+        'mobilenetv3l': [
+            'https://download.pytorch.org/models/mobilenet_v3_large-5c1a4163.pth'],
+        'mobilenetv3s': [
+            'https://download.pytorch.org/models/mobilenet_v3_small-047dcff4.pth']
 
     }
     urls = download_urls[backbone]

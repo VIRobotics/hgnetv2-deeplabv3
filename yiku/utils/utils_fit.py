@@ -179,7 +179,7 @@ def fit_one_epoch(model_train, model, loss_history, eval_callback, optimizer, ep
         # ----------------------#
         #   清零梯度
         # ----------------------#
-        optimizer.zero_grad()
+        optimizer.zero_grad(set_to_none=True)
         if not fp16:
             # ----------------------#
             #   前向传播

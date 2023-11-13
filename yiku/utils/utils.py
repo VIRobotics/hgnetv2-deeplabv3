@@ -72,7 +72,7 @@ def download_weights(backbone, model_dir=WTS_STORAGE_DIR):
     from utils.download import download_from_url,IntegrityError
 
     download_urls = {
-        'mobilenet': ['https://github.com/bubbliiiing/deeplabv3-plus-pytorch/releases/download/v1.0/mobilenet_v2.pth.tar'],
+        'mobilenetv2': ['https://github.com/bubbliiiing/deeplabv3-plus-pytorch/releases/download/v1.0/mobilenet_v2.pth.tar'],
         'xception': ['https://github.com/bubbliiiing/deeplabv3-plus-pytorch/releases/download/v1.0/xception_pytorch_imagenet.pth'],
         'hgnetv2l': ['https://github.com/VIRobotics/hgnetv2-deeplabv3/releases/download/v0.0.2-beta/hgnetv2l.pt',
                      "http://dl.aiblockly.com:8145/pretrained-model/seg/hgnetv2l.pt"],

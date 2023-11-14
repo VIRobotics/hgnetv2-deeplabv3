@@ -151,6 +151,8 @@ def main():
     device = torch.device('cpu')
     net.load_state_dict(torch.load(model_path, map_location=device))
     net = net.eval()
+    if hasattr(net,"fuse"):
+        net.fuse()
     mod = sys.modules[__name__]
     for format in FORMATS:
         func = getattr(mod, "export_"+format)

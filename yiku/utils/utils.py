@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 from PIL import Image
+from torch import nn
+import torch
 import os
 from PATH import WTS_STORAGE_DIR
 try:
@@ -99,3 +101,34 @@ def download_weights(backbone, model_dir=WTS_STORAGE_DIR):
             break
         except (IntegrityError,ConnectionError):
             UserWarning("下载失败，重试")
+
+def fuse_conv_and_bn(module):
+    module_output = module
+    if isinstance(module, (nn.Sequential,)):
+        print("[nn.Sequential]\tfusing BN and dropout")
+        idx = 0
+        for idx in range(len(module) - 1):
+            if not isinstance(module[idx], nn.Conv2d) or not isinstance(
+                    module[idx + 1], nn.BatchNorm2d
+            ):
+                continue
+            conv = module[idx]
+            bn = module[idx + 1]
+            channels = bn.weight.shape[0]
+            invstd = 1 / torch.sqrt(bn.running_var + bn.eps)
+            conv.weight.data = (
+                    conv.weight
+                    * bn.weight[:, None, None, None]
+                    * invstd[:, None, None, None]
+            )
+            if conv.bias is None:
+                conv.bias = nn.Parameter(torch.zeros(conv.out_channels))
+            conv.bias.data = (
+                                     conv.bias - bn.running_mean
+                             ) * bn.weight * invstd + bn.bias
+            module[idx + 1] = nn.Identity()
+
+    for name, child in module.named_children():
+        module_output.add_module(name, fuse_conv_and_bn(child))
+    del module
+    return module_output

@@ -123,6 +123,8 @@ class DeeplabV3(object):
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.net.load_state_dict(torch.load(self.model_path, map_location=device))
         self.net = self.net.eval()
+        if hasattr(self.net,"fuse"):
+            self.net.fuse()
         print('{} model, and classes loaded.'.format(self.model_path))
         if not onnx:
             if self.cuda:
@@ -165,10 +167,15 @@ class DeeplabV3(object):
                 else:
                     images = images.cuda()
 
+
+            warmup_data=torch.rand(1,3,*self.input_shape)
+            self.net(warmup_data)
             # ---------------------------------------------------#
             #   图片传入网络进行预测
             # ---------------------------------------------------#
+            t=time.time()
             pr = self.net(images)[0]
+            print("Infer time: %.3f ms"%((time.time()-t)*1000))
             # ---------------------------------------------------#
             #   取出每一个像素点的种类
             # ---------------------------------------------------#

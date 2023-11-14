@@ -12,9 +12,9 @@ arch = unet
 
 | 训练数据集 |                                                    权值文件名称                                                     | 测试数据集 | 输入图片大小 | mIOU  | 
 | :-----: |:-------------------------------------------------------------------------------------------------------------:| :------: | :------: |:-----:| 
-| VOC12+SBD |    [unet_vgg_voc.pth](https://github.com/bubbliiiing/unet-pytorch/releases/download/v1.0/unet_vgg_voc.pth)    | VOC-Val12 | 512x512| 58.78 | 
-| VOC12+SBD | [unet_resnet_voc.pth](https://github.com/bubbliiiing/unet-pytorch/releases/download/v1.0/unet_resnet_voc.pth) | VOC-Val12 | 512x512| 67.53 |
-| VOC12+SBD |                                             unet_hgnetv2l_voc.pth                                             | VOC-Val12 | 512x512| 74.12 | 
+| VOC12+SBD |    [unet_vgg_voc.pth](https://github.com/bubbliiiing/unet-pytorch/releases/download/v1.0/unet_vgg_voc.pth)      | VOC-Val12 | 512x512| 58.78 | 
+| VOC12+SBD | [unet_resnet_voc.pth](http://dl.aiblockly.com:8145/pretrained-model/seg/resnet50-unet.pth) | VOC-Val12 | 512x512| 72.09 |
+| VOC12+SBD |  [unet_hgnetv2l_voc.pth](http://dl.aiblockly.com:8145/pretrained-model/seg/hgnetv2l-unet.pth)                   | VOC-Val12 | 512x512| 80.33 | 
 
 #### 目前该Arch支持的主干网络有
 

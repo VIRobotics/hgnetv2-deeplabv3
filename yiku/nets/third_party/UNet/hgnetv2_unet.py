@@ -3,6 +3,7 @@ from yiku.nets.BackBone.HGNetv2 import HG_backbone_l,HG_backbone_x
 from torch import nn
 import torch.nn.functional  as F
 import torch
+from yiku.utils.utils import fuse_conv_and_bn
 class UP(nn.Module):
     def __init__(self, in_size, insize2,out_size,*args, **kwargs):
         super().__init__()
@@ -59,3 +60,7 @@ class UNet(nn.Module):
         y=self.final(y)
         y=F.interpolate(y,scale_factor=2,mode="bilinear")
         return y
+
+    def fuse(self):
+        self.bb=fuse_conv_and_bn(self.bb)
+        return self

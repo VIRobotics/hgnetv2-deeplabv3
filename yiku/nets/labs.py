@@ -4,6 +4,7 @@ import torch.nn.functional as F
 import sys
 from nets.BackBone import mobilenetv3s, mobilenetv3l, hgnetv2l, hgnetv2x, xception, mobilenetv2
 from nets.Head import aspp,transformer
+from yiku.utils.utils import fuse_conv_and_bn
 try:
     from nets.BackBone import yolov8m, yolov8s
 except ImportError:
@@ -37,3 +38,8 @@ class Labs(nn.Module):
         low_level_features, x = self.backbone(x)
         x = self.header(low_level_features, x)
         return x
+
+
+    def fuse(self):
+        self.header=fuse_conv_and_bn(self.header)
+        self.backbone=fuse_conv_and_bn(self.backbone)

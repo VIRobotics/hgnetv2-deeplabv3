@@ -15,17 +15,46 @@ def export_onnx(net,f:Path,imgsz=512,**kwargs):
         f=Path(str(f).replace(f.stem,f.stem+"+no_pre"))
     if kwargs.get("no_post",False):
         f=Path(str(f).replace(f.stem,f.stem+"+no_post"))
+        kwargs["include_resize"]=False
     batch=kwargs["batch"]
     if batch<=0:batch=1
     if kwargs.get("no_pre", False):
         im = torch.zeros(batch, 3, imgsz,imgsz).to('cpu')
     else:
         im = torch.zeros(batch, imgsz, imgsz, 3).to('cpu')
-    input_layer_names = ["images"]
+
+
+    if "include_resize" in kwargs.keys() and kwargs.get("include_resize", False) :
+        input_layer_names = ["images",'nh','nw']
+        im=(im,torch.Tensor([100]),torch.Tensor([100]))
+    else:
+        input_layer_names = ["images"]
     output_layer_names = ["output"]
 
+
+    class Net_with_resize(nn.Module):
+        def __init__(self, m,inputsize=(512,512)):
+            super().__init__()
+            self.m = m
+            self.input_shape=inputsize
+
+        def forward(self, x,nh,nw):
+
+            if not kwargs.get("no_pre", False):
+                x = x.permute(0, 3, 1, 2)
+                x = x / 255.0
+            pr = self.m(x)
+            if not kwargs.get("no_ost", False):
+                pr = F.softmax(pr, dim=1)
+                pr = pr.argmax(dim=1, keepdim=True)
+                pr = pr.to(torch.uint8)
+                pr = pr[:, :, int((self.input_shape[0] - nh) // 2): int((self.input_shape[0] - nh) // 2 + nh), \
+                     int((self.input_shape[1] - nw) // 2): int((self.input_shape[1] - nw) // 2 + nw)]
+                pr = pr.permute(0, 2, 3, 1)
+            return pr
+
     class Net_with_post(nn.Module):
-        def __init__(self, m):
+        def __init__(self, m,**kwargs):
             super().__init__()
             self.m = m
 
@@ -35,10 +64,16 @@ def export_onnx(net,f:Path,imgsz=512,**kwargs):
                 x = x / 255.0
             pr = self.m(x)
             if not kwargs.get("no_ost", False):
-                pr = F.softmax(pr.permute(0, 2, 3, 1), dim=-1)
-                pr = torch.argmax(pr, -1)
+                #pr = F.softmax(pr, dim=1)
+                pr = pr.argmax(dim=1, keepdim=True)
+                pr = pr.permute(0, 2, 3, 1)
+                pr = pr.to(torch.uint8)
             return pr
-    net=Net_with_post(net)
+
+    if "include_resize" in kwargs.keys() and kwargs.get("include_resize", False):
+        net=Net_with_resize(net,inputsize=(imgsz,imgsz))
+    else:
+        net=Net_with_post(net)
     if batch<=0:
         dynamic = {'images': {0: 'batch'}}
         dynamic['output0'] = {0: 'batch'}
@@ -113,6 +148,7 @@ def main():
     parser.add_argument("-m", '--model', default=None, help=".pth model path to override config file")
     parser.add_argument('--no-pre', action='store_true', help="Skip Preproccess")
     parser.add_argument('--no-post', action='store_true', help="Skip Postproccess")
+    parser.add_argument('--include-resize', action='store_true', help="Add Resize")
     config = configparser.ConfigParser()
     args = parser.parse_args()
     if os.path.exists(args.config):
@@ -157,7 +193,7 @@ def main():
     for format in FORMATS:
         func = getattr(mod, "export_"+format)
         func(net,Path(SAVE_PATH)/Path(model_path).name,IMGSZ,fp16=args.half,batch=args.batch,
-             no_pre=args.no_pre,no_post=args.no_post
+             no_pre=args.no_pre,no_post=args.no_post,include_resize=args.include_resize
              )
 
 if __name__ == "__main__":

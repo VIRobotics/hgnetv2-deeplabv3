@@ -28,7 +28,7 @@ def parse_requirements(file_path: Path):
 
 setup(
     name='yiku_seg',  # name of pypi package
-    version="0.1.3",  # version of pypi package
+    version="0.1.3a0",  # version of pypi package
     python_requires='>=3.8',
     license='AGPL-3.0',
     description=('SegCollection'),

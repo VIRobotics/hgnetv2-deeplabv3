@@ -174,25 +174,26 @@ class DeeplabV3(object):
             #   图片传入网络进行预测
             # ---------------------------------------------------#
             t=time.time()
-            pr = self.net(images)[0]
-            print("Infer time: %.3f ms"%((time.time()-t)*1000))
+            pr = self.net(images)
             # ---------------------------------------------------#
             #   取出每一个像素点的种类
             # ---------------------------------------------------#
-            pr = F.softmax(pr.permute(1, 2, 0), dim=-1).cpu().numpy()
+            #pr = F.softmax(pr, dim=1)
+
             # --------------------------------------#
             #   将灰条部分截取掉
             # --------------------------------------#
-            pr = pr[int((self.input_shape[0] - nh) // 2): int((self.input_shape[0] - nh) // 2 + nh), \
+            pr = pr.argmax(axis=1, keepdim=True)
+            pr = pr.to(torch.uint8)
+            pr = pr[:, :, int((self.input_shape[0] - nh) // 2): int((self.input_shape[0] - nh) // 2 + nh), \
                  int((self.input_shape[1] - nw) // 2): int((self.input_shape[1] - nw) // 2 + nw)]
+            pr = pr.permute(0, 2, 3, 1)
+            print("Infer time: %.3f ms" % ((time.time() - t) * 1000))
+            pr = pr.cpu().numpy()[0]
             # ---------------------------------------------------#
             #   进行图片的resize
             # ---------------------------------------------------#
             pr = cv2.resize(pr, (orininal_w, orininal_h), interpolation=cv2.INTER_LINEAR)
-            # ---------------------------------------------------#
-            #   取出每一个像素点的种类
-            # ---------------------------------------------------#
-            pr = pr.argmax(axis=-1)
 
         # ---------------------------------------------------------#
         #   计数

@@ -108,8 +108,6 @@ def main():
     momentum = config["advance"].getfloat("momentum", hyp_cfg.momentum)
     weight_decay= config["advance"].getfloat("weight_decay", hyp_cfg.weight_decay)
     lr_decay_type = config["advance"].getfloat("lr_decay_type", hyp_cfg.lr_decay_type)
-
-    #focal_loss\
     if CUSTOM_DS:
         DS_File, DS_Class = CUSTOM_DS.split(":")
         if DS_File and Path(DS_File).is_file() and Path(DS_File).suffix==".py":

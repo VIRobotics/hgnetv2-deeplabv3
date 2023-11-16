@@ -8,6 +8,36 @@ import onnx
 sys.path.append(os.getcwd())
 from nets.labs import Labs
 from pathlib import Path
+import platform
+from yiku.utils.utils import get_github_assets,download_weights
+MACOS, LINUX, WINDOWS = (platform.system() == x for x in ['Darwin', 'Linux', 'Windows'])
+from yiku.PATH import ASSETS
+import shutil
+def export_ncnn(net,f,imgsz=512,fp16=True,**kwargs):
+    try:
+        import ncnn
+    except ImportError:
+        return
+    name = Path('pnnx.exe' if WINDOWS else 'pnnx')
+    pnnx = name if name.is_file() else ASSETS / "exec" / name
+    if not pnnx.is_file():
+        print(
+            f'WARNING ⚠️ PNNX not found. Attempting to download binary file from '
+            'https://github.com/pnnx/pnnx/.\nNote PNNX Binary file must be placed in current working directory '
+            f'or in {ASSETS/"exec"}. See PNNX repo for full installation instructions.')
+        _, assets = get_github_assets(repo='pnnx/pnnx', retry=True)
+        system = 'macos' if MACOS else 'ubuntu' if LINUX else 'windows'  # operating system
+        asset = [x for x in assets if system in x][0] if assets else \
+            f'https://github.com/pnnx/pnnx/releases/download/20230816/pnnx-20230816-{system}.zip'  # fallback
+        asset = attempt_download_asset(asset, repo='pnnx/pnnx', release='latest')
+        if check_is_path_safe(Path.cwd(), asset):  # avoid path traversal security vulnerability
+            unzip_dir = Path(asset).with_suffix('')
+            (unzip_dir / name).rename(pnnx)  # move binary to ROOT
+            shutil.rmtree(unzip_dir)  # delete unzip dir
+            Path(asset).unlink()  # delete zip
+            pnnx.chmod(0o777)  # set read, write, and execute permissions for everyone
+
+
 
 def export_onnx(net,f:Path,imgsz=512,**kwargs):
     f=f.with_suffix(".onnx")

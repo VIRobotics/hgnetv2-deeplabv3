@@ -108,15 +108,6 @@ def main():
     momentum = config["advance"].getfloat("momentum", hyp_cfg.momentum)
     weight_decay= config["advance"].getfloat("weight_decay", hyp_cfg.weight_decay)
     lr_decay_type = config["advance"].getfloat("lr_decay_type", hyp_cfg.lr_decay_type)
-
-    if not (str(CONFIG_DIR).isascii() or str(SAVE_PATH).isascii()):
-        print("[red bold]:warning: :warning: :warning: 配置文件路径或者保存路径可能包含中文，这可能导致保存失败")
-        print("配置文件：%s" % CONFIG_DIR)
-        print("保存路径：%s" % SAVE_PATH)
-        for i in range(5, 0, -1):
-            print(f'[red bold]{i}', end='\r')
-            time.sleep(1)
-            #focal_loss\
     if CUSTOM_DS:
         DS_File, DS_Class = CUSTOM_DS.split(":")
         if DS_File and Path(DS_File).is_file() and Path(DS_File).suffix==".py":

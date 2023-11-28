@@ -195,7 +195,7 @@ def main():
         config["advance"] = {}
     CONFIG_DIR = os.path.dirname(os.path.abspath(args.config))
     IMGSZ = config["base"].getint("image_size", 512)
-    SAVE_PATH = os.path.join(CONFIG_DIR, config["base"].get("save_path"))
+    SAVE_PATH = os.path.join(CONFIG_DIR, config["base"].get("save_path","save"))
     ARCH = config["base"].get("arch", "lab")
     if not os.path.isabs(SAVE_PATH):
         SAVE_PATH = os.path.join(CONFIG_DIR, SAVE_PATH)
@@ -203,7 +203,7 @@ def main():
     BACKBONE = config["base"].get("backbone", "hgnetv2l")
     PP = config["base"].get("header", "transformer")
     NUM_CLASSES = config["base"].getint("num_classes", 21)
-    model_path = os.path.join(SAVE_PATH, "best_epoch_weights.pth")
+    model_path = os.path.join(SAVE_PATH, "best.pth")
     DATASET_PATH = config["base"].get("dataset_path", 'VOCdevkit')
     if not os.path.isabs(DATASET_PATH):
         DATASET_PATH = os.path.join(CONFIG_DIR, DATASET_PATH)

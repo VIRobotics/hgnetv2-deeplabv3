@@ -132,3 +132,18 @@ def fuse_conv_and_bn(module):
         module_output.add_module(name, fuse_conv_and_bn(child))
     del module
     return module_output
+
+import requests
+def get_github_assets(repo='ultralytics/assets', version='latest', retry=False):
+    """Return GitHub repo tag and assets (i.e. ['yolov8n.pt', 'yolov8s.pt', ...])."""
+    if version != 'latest':
+        version = f'tags/{version}'  # i.e. tags/v6.2
+    url = f'https://api.github.com/repos/{repo}/releases/{version}'
+    r = requests.get(url)  # github api
+    if r.status_code != 200 and r.reason != 'rate limit exceeded' and retry:  # failed and not 403 rate limit exceeded
+        r = requests.get(url)  # try again
+    if r.status_code != 200:
+        print(f'⚠️ GitHub assets check failure for {url}: {r.status_code} {r.reason}')
+        return '', []
+    data = r.json()
+    return data['tag_name'], [x['name'] for x in data['assets']]

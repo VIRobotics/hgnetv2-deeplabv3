@@ -5,9 +5,74 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 import onnx
+import subprocess
 sys.path.append(os.getcwd())
 from nets.labs import Labs
 from pathlib import Path
+import platform
+from yiku.utils.download import download_from_url
+MACOS, LINUX, WINDOWS = (platform.system() == x for x in ['Darwin', 'Linux', 'Windows'])
+from yiku.PATH import ASSETS,WTS_STORAGE_DIR
+import shutil
+def export_ncnn(net,f,imgsz=512,fp16=True,**kwargs):
+    batch = kwargs.get("batch",1)
+    device=kwargs.get("device","cpu")
+    if device.isdigit():
+        device="gpu"
+    try:
+        import ncnn
+    except ImportError:
+        return
+    name = Path('pnnx.exe' if WINDOWS else 'pnnx')
+    pnnx = WTS_STORAGE_DIR/name if (WTS_STORAGE_DIR/name).is_file() else ASSETS / "exec" / name
+    if not pnnx.is_file():
+        print(
+            f'WARNING ⚠️ PNNX not found. Attempting to download binary file from '
+            f'https://github.com/pnnx/pnnx/.\nNote PNNX Binary file must be placed in {WTS_STORAGE_DIR} directory '
+            f'or in {ASSETS/"exec"}. See PNNX repo for full installation instructions.')
+        pnnx=WTS_STORAGE_DIR/name
+        if WINDOWS:
+            download_from_url("https://github.com/VIRobotics/hgnetv2-deeplabv3/releases/download/v0.0.2-beta/pnnx.exe",WTS_STORAGE_DIR)
+        elif LINUX:
+            download_from_url("https://github.com/VIRobotics/hgnetv2-deeplabv3/releases/download/v0.0.2-beta/pnnx",
+                              WTS_STORAGE_DIR)
+            os.chmod(pnnx,0o755)
+
+    ts=export_torchscript(net,f=f,fimgsz=imgsz,**kwargs)
+    fo = Path(str(f).replace(f.suffix,f'_ncnn_model{os.sep}'))
+    os.makedirs(fo,exist_ok=True)
+    ncnn_args = [
+        f'ncnnparam={fo / "model.ncnn.param"}',
+        f'ncnnbin={fo / "model.ncnn.bin"}',
+        f'ncnnpy={fo / "model_ncnn.py"}', ]
+
+    pnnx_args = [
+        f'pnnxparam={fo / "model.pnnx.param"}',
+        f'pnnxbin={fo / "model.pnnx.bin"}',
+        f'pnnxpy={fo / "model_pnnx.py"}',
+        f'pnnxonnx={fo / "model.pnnx.onnx"}', ]
+
+    if kwargs.get("no_pre", False):
+        inshape =[ batch, 3, imgsz,imgsz]
+    else:
+        inshape = [batch, imgsz, imgsz, 3]
+    cmd = [
+        str(pnnx),
+        str(ts),
+        *ncnn_args,
+        *pnnx_args,
+        f'fp16={int(fp16)}',
+        f'device={device}',
+        f'inputshape="{inshape}"', ]
+    subprocess.run(cmd, check=True)
+    pnnx_files = [x.split('=')[-1] for x in pnnx_args]
+    for f_debug in ('debug.bin', 'debug.param', 'debug2.bin', 'debug2.param', *pnnx_files):
+        Path(f_debug).unlink(missing_ok=True)
+    return fo
+
+
+
+
 
 def export_onnx(net,f:Path,imgsz=512,**kwargs):
     f=f.with_suffix(".onnx")
@@ -44,7 +109,7 @@ def export_onnx(net,f:Path,imgsz=512,**kwargs):
                 x = x.permute(0, 3, 1, 2)
                 x = x / 255.0
             pr = self.m(x)
-            if not kwargs.get("no_ost", False):
+            if not kwargs.get("no_post", False):
                 pr = F.softmax(pr, dim=1)
                 pr = pr.argmax(dim=1, keepdim=True)
                 pr = pr.to(torch.uint8)
@@ -54,7 +119,7 @@ def export_onnx(net,f:Path,imgsz=512,**kwargs):
             return pr
 
     class Net_with_post(nn.Module):
-        def __init__(self, m,**kwargs):
+        def __init__(self, m):
             super().__init__()
             self.m = m
 
@@ -63,17 +128,17 @@ def export_onnx(net,f:Path,imgsz=512,**kwargs):
                 x = x.permute(0, 3, 1, 2)
                 x = x / 255.0
             pr = self.m(x)
-            if not kwargs.get("no_ost", False):
+            if not kwargs.get("no_post", False):
                 #pr = F.softmax(pr, dim=1)
                 pr = pr.argmax(dim=1, keepdim=True)
                 pr = pr.permute(0, 2, 3, 1)
-                pr = pr.to(torch.uint8)
+                pr = pr.to(torch.int)
             return pr
 
     if "include_resize" in kwargs.keys() and kwargs.get("include_resize", False):
         net=Net_with_resize(net,inputsize=(imgsz,imgsz))
     else:
-        net=Net_with_post(net)
+        net = Net_with_post(net,no_post=kwargs.get("no_post", False),no_pre=kwargs.get("no_pre", False))
     if batch<=0:
         dynamic = {'images': {0: 'batch'}}
         dynamic['output0'] = {0: 'batch'}
@@ -124,6 +189,53 @@ def export_openvino(net,f,imgsz=512,fp16=True,**kwargs):
     print("OpenVINO model export at %s"%os.path.join(fo,"model.xml"))
     return os.path.join(fo,"model.xml")
 
+def export_torchscript(net,f,imgsz=512,**kwargs):
+    f = f.with_suffix(".torchscript")
+    if kwargs.get("no_pre", False):
+        f = Path(str(f).replace(f.stem, f.stem + "+no_pre"))
+    if kwargs.get("no_post", False):
+        f = Path(str(f).replace(f.stem, f.stem + "+no_post"))
+        kwargs["include_resize"] = False
+    batch = kwargs["batch"]
+    if batch <= 0: batch = 1
+    if kwargs.get("no_pre", False):
+        im = torch.zeros(batch, 3, imgsz, imgsz).to('cpu')
+    else:
+        im = torch.zeros(batch, imgsz, imgsz, 3).to('cpu')
+
+    if "include_resize" in kwargs.keys() and kwargs.get("include_resize", False):
+        input_layer_names = ["images", 'nh', 'nw']
+        im = (im, torch.Tensor([100]), torch.Tensor([100]))
+    else:
+        input_layer_names = ["images"]
+    output_layer_names = ["output"]
+
+
+    class Net_with_post(nn.Module):
+        def __init__(self, m, **kwargs):
+            super().__init__()
+            self.m = m
+
+        def forward(self, x):
+            if not kwargs.get("no_pre", False):
+                x = x.permute(0, 3, 1, 2)
+                x = x / 255.0
+            pr = self.m(x)
+            if not kwargs.get("no_post", False):
+                # pr = F.softmax(pr, dim=1)
+                pr = pr.argmax(dim=1, keepdim=True)
+                pr = pr.permute(0, 2, 3, 1)
+                pr = pr.to(torch.uint8)
+            return pr
+
+
+    net = Net_with_post(net,no_post=kwargs.get("no_post", False),no_pre=kwargs.get("no_pre", False))
+
+    ts = torch.jit.trace(net, im, strict=False)
+    ts.save(str(f))
+    return f
+
+
 def export_paddle(net,f,imgsz=512,**kwargs):
     import x2paddle  # noqa
     from x2paddle.convert import pytorch2paddle  # noqa
@@ -149,6 +261,7 @@ def main():
     parser.add_argument('--no-pre', action='store_true', help="Skip Preproccess")
     parser.add_argument('--no-post', action='store_true', help="Skip Postproccess")
     parser.add_argument('--include-resize', action='store_true', help="Add Resize")
+    parser.add_argument('--device', default="cpu", help="set this flag to select device from cpu or gpu")
     config = configparser.ConfigParser()
     args = parser.parse_args()
     if os.path.exists(args.config):
@@ -174,7 +287,7 @@ def main():
     DOWNSAMPLE_FACTOR = config["advance"].getint("downsample_factor",16)
     ARCH = config["base"].get("arch", "lab")
     FORMATS=args.format
-    model_path = os.path.join(SAVE_PATH, "best_epoch_weights.pth")
+    model_path = os.path.join(SAVE_PATH, "best.pth")
     if args.model and os.path.isfile(str(args.model)):
         model_path=str(args.model)
 
@@ -193,7 +306,8 @@ def main():
     for format in FORMATS:
         func = getattr(mod, "export_"+format)
         func(net,Path(SAVE_PATH)/Path(model_path).name,IMGSZ,fp16=args.half,batch=args.batch,
-             no_pre=args.no_pre,no_post=args.no_post,include_resize=args.include_resize
+             no_pre=args.no_pre,no_post=args.no_post,include_resize=args.include_resize,
+             device=args.device
              )
 
 if __name__ == "__main__":

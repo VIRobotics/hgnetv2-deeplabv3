@@ -442,7 +442,8 @@ def main():
         optimizer = {
             'adam': optim.Adam(model.parameters(), Init_lr_fit, betas=(momentum, 0.999), weight_decay=weight_decay),
             'sgd': optim.SGD(model.parameters(), Init_lr_fit, momentum=momentum, nesterov=True,
-                             weight_decay=weight_decay)
+                             weight_decay=weight_decay),
+            'adamw': optim.AdamW(model.parameters(), Init_lr_fit, betas=(momentum, 0.999), weight_decay=weight_decay)
         }[optimizer_type]
 
         # ---------------------------------------#

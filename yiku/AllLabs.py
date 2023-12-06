@@ -116,6 +116,11 @@ class DeeplabV3(object):
             self.net = UNet(num_classes=self.num_classes, backbone=self.backbone,
                             downsample_factor=self.downsample_factor, pretrained=True, header=self.pp,
                             img_sz=self.input_shape)
+        elif hasattr(self,"arch") and self.arch.lower()=="pspnet":
+            from yiku.nets.third_party.PSPNet import pspnet
+            self.net = pspnet(num_classes=self.num_classes, backbone=self.backbone,
+                            downsample_factor=self.downsample_factor, pretrained=True, header=self.pp,
+                            img_sz=self.input_shape)
         else:
             self.net = Labs(num_classes=self.num_classes, backbone=self.backbone,
                            downsample_factor=self.downsample_factor, pretrained=True,header=self.pp,img_sz=self.input_shape)

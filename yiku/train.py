@@ -276,8 +276,8 @@ def main():
         from nets.third_party.UNet import UNet
         model=UNet(num_classes=num_classes,pretrained=pretrained,backbone=backbone)
     elif ARCH.lower()=="pspnet":
-        from nets.third_party.PSPNet import PSPNet
-        model=PSPNet(num_classes=num_classes, backbone=backbone, downsample_factor=downsample_factor,
+        from nets.third_party.PSPNet import pspnet
+        model=pspnet(num_classes=num_classes, backbone=backbone, downsample_factor=downsample_factor,
                  pretrained=pretrained)
     else:
         model = Labs(num_classes=num_classes, backbone=backbone, downsample_factor=downsample_factor,

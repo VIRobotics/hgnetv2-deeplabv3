@@ -2,8 +2,8 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-from nets.mobilenetv2 import mobilenetv2
-from nets.resnet import resnet50
+from .bubbliiiing_backbone import mobilenetv2
+from .bubbliiiing_backbone import resnet50
 
 
 class Resnet(nn.Module):
@@ -142,9 +142,9 @@ class _PSPModule(nn.Module):
         return output
 
 
-class PSPNet(nn.Module):
+class pspNet(nn.Module):
     def __init__(self, num_classes, downsample_factor, backbone="resnet50", pretrained=True, aux_branch=False):
-        super(PSPNet, self).__init__()
+        super(pspNet, self).__init__()
         norm_layer = nn.BatchNorm2d
         if backbone == "resnet50":
             self.backbone = Resnet(downsample_factor, pretrained)

@@ -24,17 +24,20 @@ def parse_requirements(file_path: Path):
 
     return requirements
 
-
+with open("README.md", "r") as fh:
+  long_description = fh.read()
 
 setup(
     name='yiku_seg',  # name of pypi package
-    version="0.1.3a0",  # version of pypi package
+    version="0.1.3a1",  # version of pypi package
     python_requires='>=3.8',
-    license='AGPL-3.0',
-    description=('SegCollection'),
-    url='hhttps://gitee.com/yiku-ai/hgnetv2-deeplabv3',
+    license='MIT',
+    description=('A Segment toolkit '),
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    url='https://gitee.com/yiku-ai/hgnetv2-deeplabv3',
     author='香草琪猫猫',
-    author_email='',
+    author_email='hetongtech@hotmail.com',
     packages=['yiku'] + [str(x) for x in Path('yiku').rglob('*/') if x.is_dir() and '__' not in str(x)],
     package_data={
         '': ['*.jpg',"*.pth"],
@@ -50,9 +53,9 @@ setup(
         'Topic :: Software Development',
         'Topic :: Scientific/Engineering',
         'Topic :: Scientific/Engineering :: Artificial Intelligence',
-        'Topic :: Scientific/Engineering :: Image Recognition',
+        'Topic :: Scientific/Engineering :: Image Segmentation',
         'Operating System :: POSIX :: Linux',
-        'Operating System :: MacOS',
+        "License :: OSI Approved :: MIT License",
         'Operating System :: Microsoft :: Windows', ],
     keywords='machine-learning, deep-learning, vision, ML, DL, AI, ImageSegment ,DeepLab, Transformer',
     entry_points={'console_scripts': ['siren.train = yiku.train:main',

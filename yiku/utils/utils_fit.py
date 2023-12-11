@@ -154,13 +154,14 @@ def fit_one_epoch(model_train, model, loss_history, eval_callback, optimizer, ep
                              BarColumn(),
                              TaskProgressColumn(),
                              TimeElapsedColumn(),
+                             "[bold]GPU mem:",'[bold]{task.fields[gmem]:.3g}',
                              TimeRemainingColumn(), '📈','[bold orange1]total_loss:',
                              '[bold]{task.fields[total_loss]:.3f}',
                              "  ", '[bold dark_magenta]f_score:',
                              '[bold]{task.fields[f_score]:.3f}', " ",
                              "[bold dodger_blue2]lr:",
                              "[bold]{task.fields[lr]:.6f}")
-        task1 = rich_pbar.add_task(f'[orange1]training epoch {epoch + 1}/{Epoch}', total=len(gen), total_loss=float('nan'), f_score=float('nan'), lr=float('nan'))
+        task1 = rich_pbar.add_task(f'[orange1]training epoch {epoch + 1}/{Epoch}', total=len(gen), total_loss=float('nan'), f_score=float('nan'), lr=float('nan'),gmem=0)
         rich_pbar.start()
 
     model_train.train()
@@ -242,11 +243,12 @@ def fit_one_epoch(model_train, model, loss_history, eval_callback, optimizer, ep
 
         total_loss += loss.item()
         total_f_score += _f_score.item()
+        mem = torch.cuda.memory_reserved() / 1E9 if torch.cuda.is_available() else 0
 
         if local_rank == 0:
             rich_pbar.update(task1, total_loss=total_loss / (iteration + 1),
                              f_score=total_f_score / (iteration + 1),
-                             lr=get_lr(optimizer), advance=1)
+                             lr=get_lr(optimizer), advance=1,gmem=mem)
             # pbar.set_postfix(**{'total_loss': total_loss / (iteration + 1),
             #                     'f_score': total_f_score / (iteration + 1),
             #                     'lr': get_lr(optimizer)})

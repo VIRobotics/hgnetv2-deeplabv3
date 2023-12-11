@@ -42,13 +42,11 @@ except ImportError:
 def preprocess_input(image):
     image /= 255.0
     return image
-def get_featureMap(pred_dir,m:Labs,ds_dir,mode="val",sz=512):
+def get_featureMap(m:Labs,ds_dir,mode="val",sz=512):
     image_ids = open(os.path.join(ds_dir, f"VOC2007/ImageSets/Segmentation/{mode}.txt"),
                      'r').read().splitlines()
     gt_dir = os.path.join(ds_dir, "VOC2007/SegmentationClass/")
-    if not os.path.exists(pred_dir):
-        os.makedirs(pred_dir)
-    print("Get predict result.")
+    print("Get featuremap cache.")
     m.save_featuremap=True
     for image_id in track(image_ids):
         image_path = os.path.join(ds_dir, "VOC2007/JPEGImages/" + image_id + ".jpg")

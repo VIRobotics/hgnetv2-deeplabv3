@@ -51,13 +51,9 @@ def get_featureMap(m:Labs,ds_dir,mode="val",sz=512,bb=""):
     m.save_featuremap=True
     for image_id in track(image_ids):
         image_path = os.path.join(ds_dir, "VOC2007/JPEGImages/" + image_id + ".jpg")
-        gt_img=os.path.join(gt_dir, image_id + ".png")
         image = Image.open(image_path)
-        png=Image.open(gt_img)
         image=cvtColor(image)
-        png=cvtColor(png)
         image, _, _ = resize_image(image, (sz,sz))
-        png, _, _ = resize_image(png, (sz, sz),mode="L")
         image_data = np.expand_dims(np.transpose(preprocess_input(np.array(image, np.float32)), (2, 0, 1)), 0)
         images = torch.from_numpy(image_data)
         images = images.cuda()

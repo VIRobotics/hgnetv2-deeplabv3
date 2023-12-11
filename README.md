@@ -46,7 +46,7 @@ BiliBili视频中的原仓库地址为：https://github.com/bubbliiiing/deeplabv
 
 ### 模型文档
 
-| [unet系列](./doc/unet.md) | [lab系列](./doc/lab.md)  | [pspnet系列](./doc/pspnet.md) |
+| [unet系列](./doc/unet.md) | [lab系列](./doc/lab.md)  | [pspnet系列](./doc/pspnet.md) | [segFormer系列](./doc/segformer.md)
 
 
 ### 所需环境

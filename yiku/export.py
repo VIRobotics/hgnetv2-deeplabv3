@@ -75,6 +75,7 @@ def export_ncnn(net,f,imgsz=512,fp16=True,**kwargs):
 
 
 def export_onnx(net,f:Path,imgsz=512,**kwargs):
+    d=kwargs.get("device",torch.device("cpu"))
     f=f.with_suffix(".onnx")
     if kwargs.get("no_pre",False):
         f=Path(str(f).replace(f.stem,f.stem+"+no_pre"))
@@ -84,9 +85,9 @@ def export_onnx(net,f:Path,imgsz=512,**kwargs):
     batch=kwargs["batch"]
     if batch<=0:batch=1
     if kwargs.get("no_pre", False):
-        im = torch.zeros(batch, 3, imgsz,imgsz).to('cpu')
+        im = torch.zeros(batch, 3, imgsz,imgsz).to(d)
     else:
-        im = torch.zeros(batch, imgsz, imgsz, 3).to('cpu')
+        im = torch.zeros(batch, imgsz, imgsz, 3).to(d)
 
 
     if "include_resize" in kwargs.keys() and kwargs.get("include_resize", False) :
@@ -138,7 +139,7 @@ def export_onnx(net,f:Path,imgsz=512,**kwargs):
     if "include_resize" in kwargs.keys() and kwargs.get("include_resize", False):
         net=Net_with_resize(net,inputsize=(imgsz,imgsz))
     else:
-        net = Net_with_post(net,no_post=kwargs.get("no_post", False),no_pre=kwargs.get("no_pre", False))
+        net = Net_with_post(net)
     if batch<=0:
         dynamic = {'images': {0: 'batch'}}
         dynamic['output0'] = {0: 'batch'}
@@ -242,9 +243,9 @@ def export_paddle(net,f,imgsz=512,**kwargs):
     fo = f + "_paddle"
     batch = kwargs["batch"]
     if batch > 0:
-        im = torch.zeros(batch, imgsz, imgsz, 3).to('cpu')
+        im = torch.zeros(batch, imgsz, imgsz, 3).to(d)
     else:
-        im = torch.zeros(1, imgsz, imgsz, 3).to('cpu')
+        im = torch.zeros(1, imgsz, imgsz, 3).to(d)
     print("Start Paddle model export")
     pytorch2paddle(module=net, save_dir=fo, jit_type='trace', input_examples=[im])
     print("Paddle model export at %s" % fo)
@@ -294,10 +295,21 @@ def main():
     if ARCH.lower()=="unet":
         from nets.third_party.UNet import UNet
         net=UNet(num_classes=NUM_CLASSES,pretrained=False,backbone=BACKBONE)
+    elif ARCH.lower()=="pspnet":
+        from nets.third_party.PSPNet import pspnet
+        net  = pspnet(num_classes=NUM_CLASSES, backbone=BACKBONE, downsample_factor=DOWNSAMPLE_FACTOR,
+                       pretrained=False)
     else:
         net = Labs(num_classes=NUM_CLASSES, backbone=BACKBONE,
                downsample_factor=DOWNSAMPLE_FACTOR, pretrained=False, header=PP, img_sz=[IMGSZ,IMGSZ])
-    device = torch.device('cpu')
+    if (str(args.device).isdigit() or "cuda" in str(args.device)) and torch.cuda.is_available():
+        if str(args.device).isdigit():
+            device = torch.device(f'cuda:{args.device}')
+        else:
+            device = torch.device(f'{args.device}')
+    else:
+        device = torch.device('cpu')
+    net.to(device)
     net.load_state_dict(torch.load(model_path, map_location=device))
     net = net.eval()
     if hasattr(net,"fuse"):
@@ -307,7 +319,7 @@ def main():
         func = getattr(mod, "export_"+format)
         func(net,Path(SAVE_PATH)/Path(model_path).name,IMGSZ,fp16=args.half,batch=args.batch,
              no_pre=args.no_pre,no_post=args.no_post,include_resize=args.include_resize,
-             device=args.device
+             device=device
              )
 
 if __name__ == "__main__":

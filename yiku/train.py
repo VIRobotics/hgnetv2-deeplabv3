@@ -50,7 +50,7 @@ import configparser
 import argparse
 import sys,os
 sys.path.append(os.getcwd())
-from config import LabConfig,UNetConfig,PSPNetConfig
+from config import LabConfig,UNetConfig,PSPNetConfig,SegFormerConfig
 import signal
 def signal_handler(signal, frame):
     print("操作取消 Operation Cancelled")
@@ -72,6 +72,8 @@ def main():
         hyp_cfg = UNetConfig()
     elif ARCH.lower() == "pspnet":
         hyp_cfg=PSPNetConfig()
+    elif ARCH.lower() == "segformer":
+        hyp_cfg=SegFormerConfig()
     else:
         hyp_cfg = LabConfig()
 
@@ -276,8 +278,12 @@ def main():
         from nets.third_party.UNet import UNet
         model=UNet(num_classes=num_classes,pretrained=pretrained,backbone=backbone)
     elif ARCH.lower()=="pspnet":
-        from nets.third_party.PSPNet import PSPNet
-        model=PSPNet(num_classes=num_classes, backbone=backbone, downsample_factor=downsample_factor,
+        from nets.third_party.PSPNet import pspnet
+        model=pspnet(num_classes=num_classes, backbone=backbone, downsample_factor=downsample_factor,
+                 pretrained=pretrained)
+    elif ARCH.lower()=="segformer":
+        from nets.third_party.SegFormer import SegFormer
+        model=SegFormer(num_classes=num_classes, backbone=backbone,
                  pretrained=pretrained)
     else:
         model = Labs(num_classes=num_classes, backbone=backbone, downsample_factor=downsample_factor,
@@ -442,7 +448,8 @@ def main():
         optimizer = {
             'adam': optim.Adam(model.parameters(), Init_lr_fit, betas=(momentum, 0.999), weight_decay=weight_decay),
             'sgd': optim.SGD(model.parameters(), Init_lr_fit, momentum=momentum, nesterov=True,
-                             weight_decay=weight_decay)
+                             weight_decay=weight_decay),
+            'adamw': optim.AdamW(model.parameters(), Init_lr_fit, betas=(momentum, 0.999), weight_decay=weight_decay)
         }[optimizer_type]
 
         # ---------------------------------------#

@@ -4,7 +4,7 @@ from PIL import Image
 from torch import nn
 import torch
 import os
-from PATH import WTS_STORAGE_DIR
+from yiku.PATH import WTS_STORAGE_DIR
 try:
     from rich.console import Console
     from rich.table import Table
@@ -71,7 +71,7 @@ def show_config(**kwargs):
 
 def download_weights(backbone, model_dir=WTS_STORAGE_DIR):
     import os
-    from utils.download import download_from_url,IntegrityError
+    from yiku.utils.download import download_from_url,IntegrityError
 
     download_urls = {
         'mobilenetv2': ['https://github.com/bubbliiiing/deeplabv3-plus-pytorch/releases/download/v1.0/mobilenet_v2.pth.tar'],
@@ -87,9 +87,10 @@ def download_weights(backbone, model_dir=WTS_STORAGE_DIR):
         'mobilenetv3l': [
             'https://download.pytorch.org/models/mobilenet_v3_large-5c1a4163.pth'],
         'mobilenetv3s': [
-            'https://download.pytorch.org/models/mobilenet_v3_small-047dcff4.pth']
-
+            'https://download.pytorch.org/models/mobilenet_v3_small-047dcff4.pth'],
     }
+    for i in range(6):
+        download_urls[f"b{i}"]=[f"http://dl.aiblockly.com:8145/pretrained-model/seg/segformer_b{i}_backbone_weights.pth"]
     urls = download_urls[backbone]
 
     if not os.path.exists(model_dir):

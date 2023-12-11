@@ -21,6 +21,8 @@ class Labs(nn.Module):
                          'hgnetv2l', 'hgnetv2x', 'yolov8m', 'yolov8s', 'xception']
 
         headlist = ["aspp", "transformer"]
+        self.save_featuremap=None
+        self.featuremap_result=[]
         if (backbone not in backbone_list) and hasattr(mod, backbone):
             raise ValueError(f'Unsupported backbone - `{backbone}`, Use {";".join(backbone_list)} .')
         backbone_func = getattr(mod, backbone)
@@ -35,11 +37,15 @@ class Labs(nn.Module):
         self.header = headerfunc(H, W, num_classes, low_level_channels, in_channels,use_c2f=kwargs.get("use_c2f",False))
 
     def forward(self, x):
-        low_level_features, x = self.backbone(x)
-        x = self.header(low_level_features, x)
-        return x
+        low_level_features, y = self.backbone(x)
+        if self.save_featuremap:
+            self.featuremap_result=[low_level_features,y]
+        ret = self.header(low_level_features, y)
+        return ret
 
 
     def fuse(self):
+
+
         self.header=fuse_conv_and_bn(self.header)
         self.backbone=fuse_conv_and_bn(self.backbone)

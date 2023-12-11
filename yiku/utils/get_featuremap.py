@@ -42,7 +42,8 @@ except ImportError:
 def preprocess_input(image):
     image /= 255.0
     return image
-def get_featureMap(m:Labs,ds_dir,mode="val",sz=512):
+def get_featureMap(m:Labs,ds_dir,mode="val",sz=512,bb=""):
+    m=m.cuda()
     image_ids = open(os.path.join(ds_dir, f"VOC2007/ImageSets/Segmentation/{mode}.txt"),
                      'r').read().splitlines()
     gt_dir = os.path.join(ds_dir, "VOC2007/SegmentationClass/")
@@ -57,12 +58,12 @@ def get_featureMap(m:Labs,ds_dir,mode="val",sz=512):
         png=cvtColor(png)
         image, _, _ = resize_image(image, (sz,sz))
         png, _, _ = resize_image(png, (sz, sz),mode="L")
-        image_data = np.expand_dims(np.transpose(preprocess_input(np.array(image_data, np.float32)), (2, 0, 1)), 0)
+        image_data = np.expand_dims(np.transpose(preprocess_input(np.array(image, np.float32)), (2, 0, 1)), 0)
         images = torch.from_numpy(image_data)
         images = images.cuda()
         _ = m(images)
         fm=m.featuremap_result
-        with open(os.path.join(ds_dir, "VOC2007/JPEGImages/" + image_id + ".fm"),mode="wb")as f:
+        with open(os.path.join(ds_dir, "VOC2007/JPEGImages/" + image_id + f"{bb}.fm"),mode="wb")as f:
             torch.save(fm,f)
 
     print("Get predict result done.")

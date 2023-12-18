@@ -344,6 +344,13 @@ def main():
     else:
         scaler = None
 
+    if ARCH.lower()=="lab" and not os.path.isfile(Path(DATASET_PATH)/"fm"):
+        from yiku.utils.get_featuremap import get_featureMap
+        get_featureMap(m=model.eval(),mode="val",ds_dir=DATASET_PATH,sz=IMGSZ,bb=backbone)
+        get_featureMap(m=model.eval(), mode="train", ds_dir=DATASET_PATH, sz=IMGSZ,bb=backbone)
+        with open(Path(DATASET_PATH)/"fm", 'w') as fp:pass
+
+
     model_train = model.train()
     # ----------------------------#
     #   多卡同步Bn

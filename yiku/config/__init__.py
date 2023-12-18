@@ -32,3 +32,12 @@ class SegFormerConfig(object):
     momentum = 0.9
     weight_decay = 1e-2
     lr_decay_type = 'cos'
+
+
+class HarDNetConfig(object):
+    init_lr = 0.02
+    min_lr_mutliply = 0.01
+    optimizer_type = "sgd"
+    momentum = 0.9
+    weight_decay = 5e-4
+    lr_decay_type = 'cos'

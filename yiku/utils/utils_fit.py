@@ -4,8 +4,8 @@ import torch
 import torch.nn.functional as F
 from pathlib import Path
 import numpy as np
-from nets.deeplabv3_training import (CE_Loss, Dice_loss, Focal_Loss,
-                                     weights_init)
+from yiku.nets.loss import (CE_Loss, Dice_loss, Focal_Loss,Bootstrapped_CELoss)
+from yiku.nets.deeplabv3_training import weights_init,set_optimizer_lr
 #from tqdm import tqdm
 from collections import OrderedDict
 from utils.utils import get_lr

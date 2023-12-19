@@ -1,10 +1,13 @@
-## Torch版的语义分割全家桶（TransLab DeepLabv3+ Unet一键训练与导出）
+## Torch版的语义分割全家桶（大量模型一键训练与导出）
+
+deeplabv3 translab unet segformer pspnet hardnet
+
 ---
 
 
 ## Top News
 
-<details> <summary>更新日志：增加HGNetv2-Unet模型</summary>
+<details> <summary>更新日志：增加SegFormer Hardnet等一堆模型</summary>
 
 **`2023-11`** : **增加Unet模型**
 

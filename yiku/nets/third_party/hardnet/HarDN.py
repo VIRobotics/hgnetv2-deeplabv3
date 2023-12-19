@@ -2,7 +2,7 @@ from torch import nn
 import torch
 import torch.nn.functional as F
 import math
-
+from ...modules.block import conv_bn
 def SyncBatchNorm(*args, **kwargs):
     """In cpu environment nn.SyncBatchNorm does not have kernel so use nn.BatchNorm2D instead"""
     # if torch.get_device() == 'cpu' or os.environ.get(
@@ -27,13 +27,8 @@ class ConvBNReLU(nn.Module):
 
         self._conv = nn.Conv2d(
             in_channels, out_channels, kernel_size, padding=padding, **kwargs)
-
-        if 'data_format' in kwargs:
-            data_format = kwargs['data_format']
-        else:
-            data_format = 'NCHW'
         self._batch_norm = SyncBatchNorm(out_channels)
-        self._relu = nn.ReLU()
+        self._relu = nn.ReLU6(inplace=True)
 
     def forward(self, x):
         x = self._conv(x)
@@ -298,9 +293,9 @@ class HarDNet(nn.Module):
 
         self.encoder = Encoder(encoder_blks_num, encoder_in_channels, ch_list,
                                gr, grmul, n_layers)
-
         skip_connection_channels = self.encoder.get_skip_channels()
         decoder_in_channels = self.encoder.get_out_channels()
+        self.backbone=nn.Sequential(self.stem,self.encoder)
 
         self.decoder = Decoder(decoder_blks_num, decoder_in_channels,
                                skip_connection_channels, gr, grmul, n_layers,
@@ -315,8 +310,7 @@ class HarDNet(nn.Module):
 
     def forward(self, x):
         input_shape = x.shape[2:]
-        x = self.stem(x)
-        x, skip_connections = self.encoder(x)
+        x, skip_connections = self.backbone(x)
         x = self.decoder(x, skip_connections)
         logit = self.cls_head(x)
         logit = F.interpolate(
@@ -324,7 +318,7 @@ class HarDNet(nn.Module):
             size=input_shape,
             mode="bilinear",
             align_corners=self.align_corners)
-        return [logit]
+        return logit
 
     def init_weight(self):
         if self.pretrained is not None:

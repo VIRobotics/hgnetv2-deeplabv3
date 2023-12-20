@@ -7,13 +7,14 @@ import torch.nn.functional as F
 import onnx
 import subprocess
 sys.path.append(os.getcwd())
-from nets.labs import Labs
+from yiku.nets.model.Labs.labs import Labs
 from pathlib import Path
 import platform
 from yiku.utils.download import download_from_url
 MACOS, LINUX, WINDOWS = (platform.system() == x for x in ['Darwin', 'Linux', 'Windows'])
 from yiku.PATH import ASSETS,WTS_STORAGE_DIR
-import shutil
+
+
 def export_ncnn(net,f,imgsz=512,fp16=True,**kwargs):
     batch = kwargs.get("batch",1)
     device=kwargs.get("device","cpu")
@@ -293,10 +294,10 @@ def main():
         model_path=str(args.model)
 
     if ARCH.lower()=="unet":
-        from nets.third_party.UNet import UNet
+        from nets.model.UNet import UNet
         net=UNet(num_classes=NUM_CLASSES,pretrained=False,backbone=BACKBONE)
     elif ARCH.lower()=="pspnet":
-        from nets.third_party.PSPNet import pspnet
+        from nets.model.PSPNet import pspnet
         net  = pspnet(num_classes=NUM_CLASSES, backbone=BACKBONE, downsample_factor=DOWNSAMPLE_FACTOR,
                        pretrained=False)
     else:

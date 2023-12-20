@@ -9,8 +9,9 @@ import torch.nn.functional as F
 from PIL import Image
 from torch import nn
 
-from nets.labs import Labs
-from utils.utils import cvtColor, preprocess_input, resize_image, show_config
+from yiku.nets.model.Labs.labs import Labs
+from yiku.data.process import cvtColor, preprocess_input, resize_image
+from yiku.utils.utils import show_config
 USE_INTEL=False
 try:
     import torch_directml
@@ -24,7 +25,7 @@ except ImportError:
 #   model_path、backbone和num_classes都需要修改！
 #   如果出现shape不匹配，一定要注意训练时的model_path、backbone和num_classes的修改
 # -----------------------------------------------------------------------------------#
-class DeeplabV3(object):
+class Wrapper(object):
     _defaults = {
         # -------------------------------------------------------------------#
         #   model_path指向logs文件夹下的权值文件
@@ -112,18 +113,18 @@ class DeeplabV3(object):
         # -------------------------------#
 
         if hasattr(self,"arch") and self.arch.lower()=="unet":
-            from yiku.nets.third_party.UNet import UNet
+            from yiku.nets.model.UNet import UNet
             self.net = UNet(num_classes=self.num_classes, backbone=self.backbone,
                             downsample_factor=self.downsample_factor, pretrained=True, header=self.pp,
                             img_sz=self.input_shape)
         elif hasattr(self,"arch") and self.arch.lower()=="pspnet":
-            from yiku.nets.third_party.PSPNet import pspnet
+            from yiku.nets.model.PSPNet import pspnet
             self.net = pspnet(num_classes=self.num_classes, backbone=self.backbone,
                             downsample_factor=self.downsample_factor, pretrained=True, header=self.pp,
                             img_sz=self.input_shape)
 
         elif hasattr(self, "arch") and self.arch.lower() == "segformer":
-            from nets.third_party.SegFormer import SegFormer
+            from nets.model.SegFormer import SegFormer
             self.net = SegFormer(num_classes=self.num_classes, backbone=self.backbone,
                                  pretrained=True)
         else:

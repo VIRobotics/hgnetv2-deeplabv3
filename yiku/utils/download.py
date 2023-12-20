@@ -2,6 +2,7 @@ import requests
 import re,os
 from urllib.parse import urlparse
 import pathlib
+from yiku.PATH import WTS_STORAGE_DIR
 from pip._vendor.rich.progress import (
     BarColumn,
     DownloadColumn,
@@ -78,6 +79,45 @@ def download_from_url(url,dir_path):
         raise IntegrityError
 
     return path
+
+
+def download_weights(backbone, model_dir=WTS_STORAGE_DIR):
+    import os
+    from yiku.utils.download import download_from_url,IntegrityError
+
+    download_urls = {
+        'mobilenetv2': ['https://github.com/bubbliiiing/deeplabv3-plus-pytorch/releases/download/v1.0/mobilenet_v2.pth.tar'],
+        'xception': ['https://github.com/bubbliiiing/deeplabv3-plus-pytorch/releases/download/v1.0/xception_pytorch_imagenet.pth'],
+        'hgnetv2l': ['https://github.com/VIRobotics/hgnetv2-deeplabv3/releases/download/v0.0.2-beta/hgnetv2l.pt',
+                     "http://dl.aiblockly.com:8145/pretrained-model/seg/hgnetv2l.pt"],
+        "hgnetv2x": ["https://github.com/VIRobotics/hgnetv2-deeplabv3/releases/download/v0.0.2-beta/hgnetv2x.pt",
+                     "http://dl.aiblockly.com:8145/pretrained-model/seg/hgnetv2x.pt"],
+        "yolov8s": ["https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8s-cls.pt"],
+        "yolov8m": ["https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8m-cls.pt"],
+        "resnet50":["https://s3.amazonaws.com/pytorch/models/resnet50-19c8e357.pth"],
+        "vgg":["https://download.pytorch.org/models/vgg16-397923af.pth"],
+        'mobilenetv3l': [
+            'https://download.pytorch.org/models/mobilenet_v3_large-5c1a4163.pth'],
+        'mobilenetv3s': [
+            'https://download.pytorch.org/models/mobilenet_v3_small-047dcff4.pth'],
+        "hardnet":["http://dl.aiblockly.com:8145/pretrained-model/seg/hardnet.pth"]
+    }
+    for i in range(6):
+        download_urls[f"b{i}"]=[f"http://dl.aiblockly.com:8145/pretrained-model/seg/segformer_b{i}_backbone_weights.pth"]
+    if backbone not in download_urls.keys():
+        UserWarning("目前无法下载")
+        return
+    urls = download_urls[backbone]
+
+    if not os.path.exists(model_dir):
+        os.makedirs(model_dir)
+
+    for url in urls:
+        try:
+            download_from_url(url, model_dir)
+            break
+        except (IntegrityError,ConnectionError):
+            UserWarning("下载失败，重试")
 
 
 if __name__=="__main__":

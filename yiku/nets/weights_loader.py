@@ -2,8 +2,8 @@ import torch
 import collections
 import numpy as np
 from copy import deepcopy
-from nets.deeplabv3_training import weights_init
-from nets.labs import Labs
+from yiku.nets.deeplabv3_training import weights_init
+from yiku.nets.model.Labs.labs import Labs
 
 import os
 def load_weights(device,model_path="",pretrained=False,**kwargs):

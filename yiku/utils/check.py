@@ -1,6 +1,6 @@
 from torchvision.models import mobilenet_v3_small,MobileNet_V3_Small_Weights
 import torchvision.transforms as transforms
-from utils import ASSETS
+from yiku.PATH import  ASSETS
 from PIL import Image
 import torch
 pre=transforms.Compose([

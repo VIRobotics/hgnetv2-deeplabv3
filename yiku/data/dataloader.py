@@ -6,7 +6,7 @@ import torch
 from PIL import Image
 from torch.utils.data.dataset import Dataset
 
-from yiku.utils.utils import cvtColor, preprocess_input,resize_image
+from yiku.data.process import cvtColor, preprocess_input,resize_image
 
 
 def bias_rand(a=0.0, b=1.):

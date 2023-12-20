@@ -7,13 +7,14 @@ import torch.backends.cudnn as cudnn
 import torch.distributed as dist
 import torch.optim as optim
 from torch.utils.data import DataLoader
-from nets.labs import Labs
+from yiku.nets.model.Labs.labs import Labs
 from utils.check import check_amp
-from nets.deeplabv3_training import (get_lr_scheduler, set_optimizer_lr,
+from yiku.nets.training_utils import (get_lr_scheduler, set_optimizer_lr,
                                      weights_init)
 from utils.callbacks import LossHistory, EvalCallback
-from utils.dataloader import DeeplabDataset, deeplab_dataset_collate
-from utils.utils import download_weights, show_config
+from yiku.data.dataloader import DeeplabDataset, deeplab_dataset_collate
+from utils.download import download_weights
+from utils.utils import show_config
 from utils.utils_fit import fit_one_epoch
 from pathlib import Path
 try:
@@ -52,9 +53,15 @@ import sys,os
 sys.path.append(os.getcwd())
 from config import LabConfig,UNetConfig,PSPNetConfig,SegFormerConfig,HarDNetConfig
 import signal
+import platform
 def signal_handler(signal, frame):
     print("操作取消 Operation Cancelled")
+    if platform.system().lower()=="linux":
+        print("\033[?25h")
     sys.exit(0)
+
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--config',default="config.ini")
@@ -112,6 +119,7 @@ def main():
     momentum = config["advance"].getfloat("momentum", hyp_cfg.momentum)
     weight_decay= config["advance"].getfloat("weight_decay", hyp_cfg.weight_decay)
     lr_decay_type = config["advance"].getfloat("lr_decay_type", hyp_cfg.lr_decay_type)
+    signal.signal(signal.SIGINT, signal_handler)
     if CUSTOM_DS:
         DS_File, DS_Class = CUSTOM_DS.split(":")
         if DS_File and Path(DS_File).is_file() and Path(DS_File).suffix==".py":
@@ -123,7 +131,6 @@ def main():
             "[yellow bold]:warning: :warning: :warning: 将会等待5秒，如果需要取消操作 请ctrl+c终止程序")
             print(
             "[yellow bold]:warning: :warning: :warning: Will waitting 5s，if you need cancel，press Ctrl+C")
-            signal.signal(signal.SIGINT, signal_handler)
             time.sleep(5)
             print("-------")
 
@@ -277,18 +284,18 @@ def main():
             download_weights(backbone)
 
     if ARCH.lower()=="unet":
-        from nets.third_party.UNet import UNet
+        from nets.model.UNet import UNet
         model=UNet(num_classes=num_classes,pretrained=pretrained,backbone=backbone)
     elif ARCH.lower()=="pspnet":
-        from nets.third_party.PSPNet import pspnet
+        from nets.model.PSPNet import pspnet
         model=pspnet(num_classes=num_classes, backbone=backbone, downsample_factor=downsample_factor,
                  pretrained=pretrained)
     elif ARCH.lower()=="segformer":
-        from nets.third_party.SegFormer import SegFormer
+        from nets.model.SegFormer import SegFormer
         model=SegFormer(num_classes=num_classes, backbone=backbone,
                  pretrained=pretrained)
     elif ARCH.lower()=="hardnet":
-        from yiku.nets.third_party.hardnet import hardnet
+        from yiku.nets.model.hardnet import hardnet
         model=hardnet(num_classes=num_classes,pretrained=pretrained)
     else:
         model = Labs(num_classes=num_classes, backbone=backbone, downsample_factor=downsample_factor,
@@ -349,11 +356,11 @@ def main():
     else:
         scaler = None
 
-    if ARCH.lower()=="lab" and not os.path.isfile(Path(DATASET_PATH)/"fm"):
-        from yiku.utils.get_featuremap import get_featureMap
-        get_featureMap(m=model.eval(),mode="val",ds_dir=DATASET_PATH,sz=IMGSZ,bb=backbone)
-        get_featureMap(m=model.eval(), mode="train", ds_dir=DATASET_PATH, sz=IMGSZ,bb=backbone)
-        with open(Path(DATASET_PATH)/"fm", 'w') as fp:pass
+    # if ARCH.lower()=="lab" and not os.path.isfile(Path(DATASET_PATH)/"fm"):
+    #     from yiku.utils.get_featuremap import get_featureMap
+    #     get_featureMap(m=model.eval(),mode="val",ds_dir=DATASET_PATH,sz=IMGSZ,bb=backbone)
+    #     get_featureMap(m=model.eval(), mode="train", ds_dir=DATASET_PATH, sz=IMGSZ,bb=backbone)
+    #     with open(Path(DATASET_PATH)/"fm", 'w') as fp:pass
 
 
     model_train = model.train()

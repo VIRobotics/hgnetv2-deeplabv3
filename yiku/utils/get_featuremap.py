@@ -1,14 +1,6 @@
-import time
-
-import cv2
 import numpy as np
 from PIL import Image
-from pathlib import Path
-from yiku.nets.labs import Labs
-from collections import OrderedDict
-from tempfile import TemporaryDirectory
-import argparse,configparser
-from utils import ASSETS
+from yiku.nets.model.Labs.labs import Labs
 import torch
 import os
 from yiku.utils.utils import resize_image,cvtColor

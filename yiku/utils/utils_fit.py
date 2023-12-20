@@ -4,12 +4,12 @@ import torch
 import torch.nn.functional as F
 from pathlib import Path
 import numpy as np
-from yiku.nets.loss import (CE_Loss, Dice_loss, Focal_Loss,Bootstrapped_CELoss)
-from yiku.nets.deeplabv3_training import weights_init,set_optimizer_lr
-#from tqdm import tqdm
+from yiku.nets.loss import (CE_Loss, Dice_loss, Focal_Loss, Bootstrapped_CELoss)
+from yiku.nets.training_utils import weights_init, set_optimizer_lr
+# from tqdm import tqdm
 from collections import OrderedDict
-from utils.utils import get_lr
-from utils.utils_metrics import f_score
+from yiku.utils.utils import get_lr
+from yiku.utils.utils_metrics import f_score
 
 try:
     from rich.progress import (
@@ -17,7 +17,7 @@ try:
         DownloadColumn,
         Progress,
         SpinnerColumn,
-        TaskProgressColumn,track,
+        TaskProgressColumn, track,
         TimeElapsedColumn,
         TimeRemainingColumn)
     from rich import print
@@ -31,7 +31,7 @@ except ImportError:
         BarColumn,
         DownloadColumn,
         Progress,
-        SpinnerColumn,track,
+        SpinnerColumn, track,
         TaskProgressColumn,
         TimeElapsedColumn,
         TimeRemainingColumn
@@ -41,18 +41,16 @@ except ImportError:
     from pip._vendor.rich.console import Console
 
 
-
 class SegmentationMetric(object):
-    def __init__(self, numClass,cuda=True):
+    def __init__(self, numClass, cuda=True):
         self.numClass = numClass
-        self._cuda=cuda
+        self._cuda = cuda
         if self._cuda:
             self.device = torch.device('cuda:0')
         else:
             self.device = torch.device('cpu')
 
-
-        self.confusionMatrix = torch.zeros((self.numClass,) * 2,device=self.device)  # 混淆矩阵（空）
+        self.confusionMatrix = torch.zeros((self.numClass,) * 2, device=self.device)  # 混淆矩阵（空）
 
     def pixelAccuracy(self):
         # return all class overall pixel accuracy 正确的像素占总像素的比例
@@ -72,7 +70,7 @@ class SegmentationMetric(object):
         :return:
         """
         classAcc = self.classPixelAccuracy()
-        meanAcc = classAcc[classAcc < float('inf')].mean() # np.nanmean 求平均值，nan表示遇到Nan类型，其值取为0
+        meanAcc = classAcc[classAcc < float('inf')].mean()  # np.nanmean 求平均值，nan表示遇到Nan类型，其值取为0
         if self._cuda:
             return meanAcc.cpu()
         return meanAcc  # 返回单个值，如：np.nanmean([0.90, 0.80, 0.96, nan, nan]) = (0.90 + 0.80 + 0.96） / 3 =  0.89
@@ -88,7 +86,7 @@ class SegmentationMetric(object):
 
     def meanIntersectionOverUnion(self):
         IoU = self.IntersectionOverUnion()
-        mIoU = IoU[IoU<float('inf')].mean()# 求各类别IoU的平均
+        mIoU = IoU[IoU < float('inf')].mean()  # 求各类别IoU的平均
         if self._cuda:
             return mIoU.cpu()
         else:
@@ -108,7 +106,7 @@ class SegmentationMetric(object):
         label = self.numClass * imgLabel[mask] + imgPredict[mask]
         count = torch.bincount(label, minlength=self.numClass ** 2)
         confusionMatrix = count.view(self.numClass, self.numClass)
-        confusionMatrix=confusionMatrix.to(self.device)
+        confusionMatrix = confusionMatrix.to(self.device)
         return confusionMatrix
 
     def Frequency_Weighted_Intersection_over_Union(self):
@@ -132,9 +130,7 @@ class SegmentationMetric(object):
         return self.confusionMatrix
 
     def reset(self):
-        self.confusionMatrix = torch.zeros((self.numClass, self.numClass),device=self.device)
-
-
+        self.confusionMatrix = torch.zeros((self.numClass, self.numClass), device=self.device)
 
 
 def fit_one_epoch(model_train, model, loss_history, eval_callback, optimizer, epoch, epoch_step, epoch_step_val, gen,
@@ -150,18 +146,19 @@ def fit_one_epoch(model_train, model, loss_history, eval_callback, optimizer, ep
         # pbar = tqdm(total=epoch_step, desc=f'epoch {epoch + 1}/{Epoch}', postfix=dict, mininterval=0.3, leave=False,
         #             ncols=150)
         rich_pbar = Progress(SpinnerColumn(),
-                             "🐱","{task.description}",
+                             "🐱", "{task.description}",
                              BarColumn(),
                              TaskProgressColumn(),
                              TimeElapsedColumn(),
-                             "[bold]GPU mem:",'[bold]{task.fields[gmem]:.3g}',
-                             TimeRemainingColumn(), '📈','[bold orange1]total_loss:',
+                             "[bold]GPU mem:", '[bold]{task.fields[gmem]:.3g}',
+                             TimeRemainingColumn(), '📈', '[bold orange1]total_loss:',
                              '[bold]{task.fields[total_loss]:.3f}',
                              "  ", '[bold dark_magenta]f_score:',
                              '[bold]{task.fields[f_score]:.3f}', " ",
                              "[bold dodger_blue2]lr:",
                              "[bold]{task.fields[lr]:.6f}")
-        task1 = rich_pbar.add_task(f'[orange1]training epoch {epoch + 1}/{Epoch}', total=len(gen), total_loss=float('nan'), f_score=float('nan'), lr=float('nan'),gmem=0)
+        task1 = rich_pbar.add_task(f'[orange1]training epoch {epoch + 1}/{Epoch}', total=len(gen),
+                                   total_loss=float('nan'), f_score=float('nan'), lr=float('nan'), gmem=0)
         rich_pbar.start()
 
     model_train.train()
@@ -248,7 +245,7 @@ def fit_one_epoch(model_train, model, loss_history, eval_callback, optimizer, ep
         if local_rank == 0:
             rich_pbar.update(task1, total_loss=total_loss / (iteration + 1),
                              f_score=total_f_score / (iteration + 1),
-                             lr=get_lr(optimizer), advance=1,gmem=mem)
+                             lr=get_lr(optimizer), advance=1, gmem=mem)
             # pbar.set_postfix(**{'total_loss': total_loss / (iteration + 1),
             #                     'f_score': total_f_score / (iteration + 1),
             #                     'lr': get_lr(optimizer)})
@@ -260,11 +257,11 @@ def fit_one_epoch(model_train, model, loss_history, eval_callback, optimizer, ep
         # pbar = tqdm(total=epoch_step_val, desc=f'Epoch {epoch + 1}/{Epoch}', postfix=dict, mininterval=0.3)
         del rich_pbar
         rich_pbar = Progress(SpinnerColumn(),
-                             "🌕","{task.description}",
+                             "🌕", "{task.description}",
                              BarColumn(),
                              TaskProgressColumn(),
                              TimeElapsedColumn(),
-                             TimeRemainingColumn(), '📈','[bold pink1]val_loss:',
+                             TimeRemainingColumn(), '📈', '[bold pink1]val_loss:',
                              '[bold]{task.fields[val_loss]:.3f}',
                              "  ", '[bold green4]f_score:',
                              '[bold]{task.fields[f_score]:.3f}', " ",
@@ -273,14 +270,12 @@ def fit_one_epoch(model_train, model, loss_history, eval_callback, optimizer, ep
                              )
 
         task1 = rich_pbar.add_task(f'[pink1]val epoch {epoch + 1}/{Epoch}', total=len(gen_val), val_loss=float('nan'),
-                                   f_score=float('nan'),miou=float('nan'))
+                                   f_score=float('nan'), miou=float('nan'))
         rich_pbar.start()
 
-
-
-    metrics=SegmentationMetric(numClass=num_classes)
-    mious=[]
-    mpas=[]
+    metrics = SegmentationMetric(numClass=num_classes)
+    mious = []
+    mpas = []
     for iteration, batch in enumerate(gen_val):
         if iteration >= epoch_step_val:
             break
@@ -297,15 +292,15 @@ def fit_one_epoch(model_train, model, loss_history, eval_callback, optimizer, ep
             #   前向传播
             # ----------------------#
             outputs = model_train(imgs)
-            if local_rank==0:
+            if local_rank == 0:
                 pred = F.softmax(outputs.permute(0, 2, 3, 1), dim=-1)
                 pred = torch.argmax(pred, -1)
                 metrics.addBatch(pred, pngs)
                 mIoU = metrics.meanIntersectionOverUnion()
-                mpa=metrics.meanPixelAccuracy()
+                mpa = metrics.meanPixelAccuracy()
                 mious.append(mIoU)
                 mpas.append(mpa)
-            #metrics.reset()
+            # metrics.reset()
             # ----------------------#
             #   计算损失
             # ----------------------#
@@ -327,19 +322,17 @@ def fit_one_epoch(model_train, model, loss_history, eval_callback, optimizer, ep
 
             if local_rank == 0:
                 rich_pbar.update(task1, val_loss=val_loss / (iteration + 1),
-                                 f_score=val_f_score / (iteration + 1), miou=mIoU,advance=1)
+                                 f_score=val_f_score / (iteration + 1), miou=mIoU, advance=1)
                 # pbar.set_postfix(**{'val_loss': val_loss / (iteration + 1),
                 #                     'f_score': val_f_score / (iteration + 1),
                 #                     'lr': get_lr(optimizer)})
                 # pbar.update(1)
 
-
-
     if local_rank == 0:
         rich_pbar.stop()
         # pbar.close()
         miou = mious[-1]
-        mpa=mpas[-1]
+        mpa = mpas[-1]
         flag = len(loss_history.val_loss) <= 1 or miou > max(loss_history.miou)
         loss_history.append_loss(epoch + 1, total_loss / epoch_step, val_loss / epoch_step_val, miou)
 
@@ -347,16 +340,16 @@ def fit_one_epoch(model_train, model, loss_history, eval_callback, optimizer, ep
         table.add_column("参数Arg", justify="right", style="bold pink1", no_wrap=True)
         table.add_column("值Value", style="orange1")
         table.add_row("epoch", str(epoch + 1) + '/' + str(Epoch))
-        table.add_row("Total Loss", "%.3f "%(total_loss / epoch_step))
+        table.add_row("Total Loss", "%.3f " % (total_loss / epoch_step))
         table.add_row("Val Loss", "%.3f " % (val_loss / epoch_step_val))
-        table.add_row("mIoU", "%.3f " % (miou*100)+"%")
+        table.add_row("mIoU", "%.3f " % (miou * 100) + "%")
         table.add_row("mPA", "%.3f " % (mpa * 100) + "%")
         console = Console()
         console.print(table)
-        with open(Path(save_dir)/ "logs.csv", 'a+') as f:
+        with open(Path(save_dir) / "logs.csv", 'a+') as f:
             csv_write = csv.writer(f)
             data_row = [epoch + 1, "%.3f" % (total_loss / epoch_step), "%.3f" % (val_loss / epoch_step_val)]
-            data_row.append("%.3f"%(miou*100))
+            data_row.append("%.3f" % (miou * 100))
             data_row.append("%.3f" % (mpa * 100))
             csv_write.writerow(data_row)
         # -----------------------------------------------#
@@ -365,18 +358,18 @@ def fit_one_epoch(model_train, model, loss_history, eval_callback, optimizer, ep
         meta = OrderedDict()
         meta["val_his_loss"] = loss_history.val_loss
         meta["his_loss"] = loss_history.losses
-        meta["miou"]=loss_history.miou
+        meta["miou"] = loss_history.miou
         meta["curr_epoch"] = epoch
         meta["epoch_step_val"] = epoch_step_val
         meta["curr_val_loss"] = val_loss
         # if (epoch + 1) % save_period == 0 or epoch + 1 == Epoch:
         #     torch.save(model.state_dict(), Path(save_dir)/('ep%03d-loss%.3f-val_loss%.3f.pth' % (
         #         epoch + 1, total_loss / epoch_step, val_loss / epoch_step_val)))
-        if  flag:
-            print('⚾ [green1] Save best model to %s'%str(Path(save_dir)/ "best.pth"))
-            with open(Path(save_dir)/ "best.pth",mode="wb")as f:
+        if flag:
+            print('⚾ [green1] Save best model to %s' % str(Path(save_dir) / "best.pth"))
+            with open(Path(save_dir) / "best.pth", mode="wb") as f:
                 torch.save(model.state_dict(), f)
-            with open(Path(save_dir)/"best.meta", mode="wb") as f:
+            with open(Path(save_dir) / "best.meta", mode="wb") as f:
                 torch.save(meta, f)
         with open(Path(save_dir) / "last.pth", mode="wb") as f:
             torch.save(model.state_dict(), f)

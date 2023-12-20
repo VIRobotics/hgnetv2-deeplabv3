@@ -38,7 +38,7 @@ except ImportError:
     )
     from pip._vendor.rich import print
 #from torch.utils.tensorboard import SummaryWriter
-from .utils import cvtColor, preprocess_input, resize_image
+from yiku.data.process import cvtColor, preprocess_input, resize_image
 from .utils_metrics import compute_mIoU
 
 

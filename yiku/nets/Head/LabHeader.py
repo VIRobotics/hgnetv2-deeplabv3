@@ -2,8 +2,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from nets.modules.feature_decoder import TransEnc,ASPP
-from nets.Head.BaseLab import BaseLabHeader
+from yiku.nets.modules.feature_decoder import TransEnc,ASPP
+from yiku.nets.Head.BaseLab import BaseLabHeader
 
 class LabHeader(BaseLabHeader):
     def __init__(self, H, W, num_classes: int, low_f_ch: int, f_ch: int, downsample_factor=16, enc="ASPP",*args, **kwargs):

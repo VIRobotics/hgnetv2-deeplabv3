@@ -8,7 +8,7 @@ import cv2
 import numpy as np
 from PIL import Image
 from pathlib import Path
-from AllLabs import DeeplabV3
+from yiku.model_warp import Wrapper
 from utils.download import download_from_url
 from tempfile import TemporaryDirectory
 import argparse,configparser
@@ -152,7 +152,7 @@ def auto_input_type(path:str):
 
     return mode
 
-def get_miou(miou_mode,pred_dir,m:DeeplabV3,ds_dir,num_classes,name_classes):
+def get_miou(miou_mode,pred_dir,m:Wrapper,ds_dir,num_classes,name_classes):
     image_ids = open(os.path.join(ds_dir, "VOC2007/ImageSets/Segmentation/val.txt"),
                      'r').read().splitlines()
     gt_dir = os.path.join(ds_dir, "VOC2007/SegmentationClass/")
@@ -209,7 +209,7 @@ def main():
         DATASET_PATH = os.path.join(CONFIG_DIR, DATASET_PATH)
     if args.model and os.path.isfile(str(args.model)):
         model_path=str(args.model)
-    m = DeeplabV3(num_classes=NUM_CLASSES, backbone=BACKBONE, model_path=model_path
+    m = Wrapper(num_classes=NUM_CLASSES, backbone=BACKBONE, model_path=model_path
                   , pp=PP, cuda=torch.cuda.is_available(), input_shape=[IMGSZ, IMGSZ], arch=ARCH)
 
     if args.get_miou in [0,1,2]:

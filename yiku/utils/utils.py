@@ -13,41 +13,7 @@ except ImportError:
     from pip._vendor.rich.console import Console
 
 
-# ---------------------------------------------------------#
-#   将图像转换成RGB图像，防止灰度图在预测时报错。
-#   代码仅仅支持RGB图像的预测，所有其它类型的图像都会转化成RGB
-# ---------------------------------------------------------#
-def cvtColor(image):
-    if len(np.shape(image)) == 3 and np.shape(image)[2] == 3:
-        return image
-    else:
-        image = image.convert('RGB')
-        return image
-        #return cv2.cvtColor(image,cv2.COLOR_GRAY2BGR)
 
-
-    # ---------------------------------------------------#
-
-
-#   对输入图像进行resize
-# ---------------------------------------------------#
-def resize_image(image, size,mode="RGB"):
-    iw, ih = image.size
-    w, h = size
-
-    scale = min(w / iw, h / ih)
-    nw = int(iw * scale)
-    nh = int(ih * scale)
-
-    image = image.resize((nw, nh), Image.BICUBIC)
-    if mode=="L":
-        color=(0)
-    else:
-        color=(128, 128, 128)
-    new_image = Image.new(mode, size, color)
-    new_image.paste(image, ((w - nw) // 2, (h - nh) // 2))
-
-    return new_image, nw, nh
 
 
 # ---------------------------------------------------#
@@ -58,9 +24,6 @@ def get_lr(optimizer):
         return param_group['lr']
 
 
-def preprocess_input(image):
-    image /= 255.0
-    return image
 
 
 def show_config(**kwargs):
@@ -73,43 +36,7 @@ def show_config(**kwargs):
     console.print(table)
 
 
-def download_weights(backbone, model_dir=WTS_STORAGE_DIR):
-    import os
-    from yiku.utils.download import download_from_url,IntegrityError
 
-    download_urls = {
-        'mobilenetv2': ['https://github.com/bubbliiiing/deeplabv3-plus-pytorch/releases/download/v1.0/mobilenet_v2.pth.tar'],
-        'xception': ['https://github.com/bubbliiiing/deeplabv3-plus-pytorch/releases/download/v1.0/xception_pytorch_imagenet.pth'],
-        'hgnetv2l': ['https://github.com/VIRobotics/hgnetv2-deeplabv3/releases/download/v0.0.2-beta/hgnetv2l.pt',
-                     "http://dl.aiblockly.com:8145/pretrained-model/seg/hgnetv2l.pt"],
-        "hgnetv2x": ["https://github.com/VIRobotics/hgnetv2-deeplabv3/releases/download/v0.0.2-beta/hgnetv2x.pt",
-                     "http://dl.aiblockly.com:8145/pretrained-model/seg/hgnetv2x.pt"],
-        "yolov8s": ["https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8s-cls.pt"],
-        "yolov8m": ["https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8m-cls.pt"],
-        "resnet50":["https://s3.amazonaws.com/pytorch/models/resnet50-19c8e357.pth"],
-        "vgg":["https://download.pytorch.org/models/vgg16-397923af.pth"],
-        'mobilenetv3l': [
-            'https://download.pytorch.org/models/mobilenet_v3_large-5c1a4163.pth'],
-        'mobilenetv3s': [
-            'https://download.pytorch.org/models/mobilenet_v3_small-047dcff4.pth'],
-        "hardnet":["http://dl.aiblockly.com:8145/pretrained-model/seg/hardnet.pth"]
-    }
-    for i in range(6):
-        download_urls[f"b{i}"]=[f"http://dl.aiblockly.com:8145/pretrained-model/seg/segformer_b{i}_backbone_weights.pth"]
-    if backbone not in download_urls.keys():
-        UserWarning("目前无法下载")
-        return
-    urls = download_urls[backbone]
-
-    if not os.path.exists(model_dir):
-        os.makedirs(model_dir)
-
-    for url in urls:
-        try:
-            download_from_url(url, model_dir)
-            break
-        except (IntegrityError,ConnectionError):
-            UserWarning("下载失败，重试")
 
 def fuse_conv_and_bn(module):
     module_output = module

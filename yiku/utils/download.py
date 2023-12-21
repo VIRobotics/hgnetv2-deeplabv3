@@ -100,7 +100,7 @@ def download_weights(backbone, model_dir=WTS_STORAGE_DIR):
             'https://download.pytorch.org/models/mobilenet_v3_large-5c1a4163.pth'],
         'mobilenetv3s': [
             'https://download.pytorch.org/models/mobilenet_v3_small-047dcff4.pth'],
-        "hardnet":["http://dl.aiblockly.com:8145/pretrained-model/seg/hardnet.pth"]
+        "hardnet":["http://dl.aiblockly.com:8145/pretrained-model/seg/hardnet_backbone.pt"]
     }
     for i in range(6):
         download_urls[f"b{i}"]=[f"http://dl.aiblockly.com:8145/pretrained-model/seg/segformer_b{i}_backbone_weights.pth"]

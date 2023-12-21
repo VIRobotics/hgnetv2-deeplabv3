@@ -1,8 +1,15 @@
 from torch import nn
 import torch
 import torch.nn.functional as F
-import math
-from ...modules.block import conv_bn
+from yiku.PATH import WTS_STORAGE_DIR
+import numpy as np
+try:
+    from rich import print
+except ImportError:
+    import warnings
+
+    warnings.filterwarnings('ignore', message="Setuptools is replacing distutils.", category=UserWarning)
+    from pip._vendor.rich import print
 def SyncBatchNorm(*args, **kwargs):
     """In cpu environment nn.SyncBatchNorm does not have kernel so use nn.BatchNorm2D instead"""
     # if torch.get_device() == 'cpu' or os.environ.get(
@@ -321,8 +328,34 @@ class HarDNet(nn.Module):
         return logit
 
     def init_weight(self):
+        from collections import OrderedDict
         if self.pretrained is not None:
-            load_entire_model(self, self.pretrained)
+            model_dict = self.backbone.state_dict()
+            if next(self.parameters()).is_cuda:
+                d=torch.device('cuda')
+            else:
+                d = torch.device('cpu')
+            with open(WTS_STORAGE_DIR/"hardnet_backbone.pt",mode="rb")as f:
+                wts_real=torch.load(f,map_location=d)
+                k_mis=[]
+                k_corr=[]
+                tmp_wts=OrderedDict()
+                l=len(model_dict.keys())
+                for k,v in wts_real.items():
+                    if str(k).removeprefix("bb.") in model_dict.keys():
+                        k=str(k).removeprefix("bb.")
+                    if k in model_dict.keys() and np.shape(model_dict[k]) == np.shape(v):
+                        tmp_wts[k] = v
+                        k_corr.append(k)
+                    else:
+                        k_mis.append(k)
+                self.backbone.load_state_dict(tmp_wts,strict=False)
+                print("\nFail To Load Key num:", len(k_mis))
+                print("\nSuccess To Load Key num:", len(k_corr))
+            with open(WTS_STORAGE_DIR/"hardnet_backbone.pt",mode="wb")as fw:
+                torch.save(tmp_wts,fw)
+
+
 
 def load_entire_model(model, pretrained):
     if pretrained is not None:

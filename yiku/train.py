@@ -297,6 +297,9 @@ def main():
     elif ARCH.lower()=="hardnet":
         from yiku.nets.model.hardnet import hardnet
         model=hardnet(num_classes=num_classes,pretrained=pretrained)
+    elif ARCH.lower()=="unetpp":
+        from yiku.nets.model.UNetplusplus.UnetPP import UNetPlusPlus
+        model = UNetPlusPlus(num_classes=num_classes, pretrained=pretrained)
     else:
         model = Labs(num_classes=num_classes, backbone=backbone, downsample_factor=downsample_factor,
                  pretrained=pretrained, header=pp)

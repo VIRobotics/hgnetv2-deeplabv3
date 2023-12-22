@@ -2,7 +2,7 @@ import numpy as np
 
 import torch.nn as nn
 import torch.nn.functional as F
-from .utils import initBN_const
+from yiku.utils.utils_wts_init import initBN_const
 
 
 

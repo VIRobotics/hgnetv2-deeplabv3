@@ -22,26 +22,7 @@ def SyncBatchNorm(*args, **kwargs):
     #     return nn.SyncBatchNorm(*args, **kwargs)
     return nn.BatchNorm2d(*args,**kwargs)
 
-class ConvBNReLU(nn.Module):
-    def __init__(self,
-                 in_channels,
-                 out_channels,
-                 kernel_size,
-                 padding=1,
-                 **kwargs):
-        super().__init__()
-
-
-        self._conv = nn.Conv2d(
-            in_channels, out_channels, kernel_size, padding=padding, **kwargs)
-        self._batch_norm = SyncBatchNorm(out_channels)
-        self._relu = nn.ReLU6(inplace=True)
-
-    def forward(self, x):
-        x = self._conv(x)
-        x = self._batch_norm(x)
-        x = self._relu(x)
-        return x
+from yiku.nets.modules import ConvBNReLU
 
 class Encoder(nn.Module):
     """The Encoder implementation of FC-HardDNet 70.

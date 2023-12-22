@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import init
-from utils import initBN_const,trunc_normal_,zeros_,ones_,kaiming_normal_,DropPath
+from yiku.utils.utils_wts_init import initBN_const,trunc_normal_,zeros_,ones_,kaiming_normal_,DropPath
 
 def to_2tuple(x):
     return tuple([x] * 2)
@@ -314,7 +314,7 @@ class Attention4D( nn.Module):
         bias = torch.gather(
             self.attention_biases_seg,
             self.attention_bias_idxs_seg.flatten(),
-            dim=1).reshape([
+            ).reshape([
                 self.attention_biases_seg.shape[0],
                 self.attention_bias_idxs_seg.shape[0],
                 self.attention_bias_idxs_seg.shape[1]
@@ -482,7 +482,7 @@ class Attention4DDownsample( nn.Module):
         bias = torch.gather(
             self.attention_biases_seg,
             self.attention_bias_idxs_seg.flatten(),
-            axis=1).reshape([
+            ).reshape([
                 self.attention_biases_seg.shape[0],
                 self.attention_bias_idxs_seg.shape[0],
                 self.attention_bias_idxs_seg.shape[1]
@@ -492,7 +492,7 @@ class Attention4DDownsample( nn.Module):
             bias.unsqueeze(0), size=attn.shape[-2:], mode='bicubic')
         attn = attn + bias
 
-        attn = F.softmax(attn, axis=-1)
+        attn = F.softmax(attn, dim=-1)
 
         x = (attn @v).transpose([0, 1, 3, 2])
         out = x.reshape([B, self.dh, H // 2, W // 2]) + v_local

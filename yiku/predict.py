@@ -186,6 +186,7 @@ def main():
     parser.add_argument( '--show',action="store_true",help="flag to enable playback")
     parser.add_argument("-m", '--model', default=None, help=".pth model path to override config file")
     parser.add_argument('--get-miou',  type=int, default=-1,help="-1,0,1,2 -1:disable ")
+    parser.add_argument('--mix_type',  type=int, default=0,help="0,1,2")
     config = configparser.ConfigParser()
     args = parser.parse_args()
     if os.path.exists(args.config):
@@ -204,13 +205,14 @@ def main():
     PP = config["base"].get("header", "transformer")
     NUM_CLASSES = config["base"].getint("num_classes", 21)
     model_path = os.path.join(SAVE_PATH, "best.pth")
+    mix_type=int(args.mix_type)
     DATASET_PATH = config["base"].get("dataset_path", 'VOCdevkit')
     if not os.path.isabs(DATASET_PATH):
         DATASET_PATH = os.path.join(CONFIG_DIR, DATASET_PATH)
     if args.model and os.path.isfile(str(args.model)):
         model_path=str(args.model)
     m = Wrapper(num_classes=NUM_CLASSES, backbone=BACKBONE, model_path=model_path
-                  , pp=PP, cuda=torch.cuda.is_available(), input_shape=[IMGSZ, IMGSZ], arch=ARCH)
+                  , pp=PP, cuda=torch.cuda.is_available(), input_shape=[IMGSZ, IMGSZ], arch=ARCH,mix_type=mix_type)
 
     if args.get_miou in [0,1,2]:
         o = Path(SAVE_PATH) / ("result_%s" % "get_miou")

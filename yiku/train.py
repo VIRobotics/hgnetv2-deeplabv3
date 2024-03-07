@@ -302,7 +302,7 @@ def main():
         model = UNetPlusPlus(num_classes=num_classes, pretrained=pretrained)
     else:
         model = Labs(num_classes=num_classes, backbone=backbone, downsample_factor=downsample_factor,
-                 pretrained=pretrained, header=pp)
+                 pretrained=pretrained, header=pp,img_sz=(IMGSZ,IMGSZ))
     if not pretrained:
         weights_init(model)
     if model_path != '':

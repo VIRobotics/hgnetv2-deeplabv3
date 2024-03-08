@@ -7,7 +7,16 @@ deeplabv3 translab unet segformer pspnet hardnet
 
 ## Top News
 
-<details> <summary>更新日志：增加SegFormer Hardnet等一堆模型</summary>
+<details> <summary>更新日志：增加数据增强开关</summary>
+
+
+**`2024-03`** : **增加数据增强开关 增加一堆模型**
+
+~~OOOO天下第一~~
+
+增加augmentation字段组 方便控制数据增强功能
+
+新增了UNet+百度HGNetv2的杂交模型，可以在配置文件base字段里增加 arch=unet启用
 
 **`2023-11`** : **增加Unet模型**
 
@@ -75,7 +84,16 @@ BiliBili视频中的原仓库地址为：https://github.com/bubbliiiing/deeplabv
 4、在训练前利用voc_annotation.py文件生成对应的txt。    
 5、在config.ini下面，选择自己要使用的主干模型和下采样因子,支持的模型在预测步骤中有描述。下采样因子可以在8和16中选择。需要注意的是，预训练模型需要和主干模型相对应。   
 6、注意修改train.py的num_classes为分类个数+1。    
-7、运行`siren.train -c config文件路径`即可开始训练。
+7、如果您需要控制数据增强功能 请在config.ini里面添加如下字段组
+```
+[augmentation]
+enable=true #总开关
+jitter=0.3 # 尺寸抖动比率
+flip=0.5 # 翻转图片比率
+blur=0.25 # 模糊比率
+hsv_jitter_enable=False #HSV抖动
+```
+8、运行`siren.train -c config文件路径`即可开始训练。
 
 ### 导出步骤
 1、命令行输入`siren.export -c config文件路径 -f onnx`。onnx位于配置文件的训练结果文件夹。

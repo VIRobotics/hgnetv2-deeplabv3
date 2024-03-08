@@ -126,7 +126,7 @@ class VOCDataset(Dataset):
             M = cv2.getRotationMatrix2D(center, -rotation, scale=1)
             image_data = cv2.warpAffine(image_data, M, (w, h), flags=cv2.INTER_CUBIC, borderValue=(128, 128, 128))
             label = cv2.warpAffine(np.array(label, np.uint8), M, (w, h), flags=cv2.INTER_NEAREST, borderValue=(0))
-        if callable(self.hsv_jitter):
+        if callable(self.hsv_jitter) and getattr(self, "hsv_jitter_enable", True):
             image_data = self.hsv_jitter(image_data, hue, sat, val)
         return image_data, label
 

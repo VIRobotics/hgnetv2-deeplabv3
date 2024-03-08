@@ -82,6 +82,8 @@ BiliBili视频中的原仓库地址为：https://github.com/bubbliiiing/deeplabv
 -f 参数支持 onnx openvino 和paddle 其中 还有--half 只要这个flag存在 openvino就是导出FP16精度的模型，
 这在较新XeGPU上相比FP32有两倍的提升。所以参数 可以输入`siren.export -h`
 
+config,ini里面的base字段 加上`single_ch=true`可以启用单通道输入，~~虽然对推理性能没卵用，但有些人非得要这个模式~~
+
 2、~~运行`python -m yiku.export -c config文件路径 -f onnx`也可以导出~~。
 
 

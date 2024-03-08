@@ -77,11 +77,6 @@ def export_ncnn(net,f,imgsz=512,fp16=True,**kwargs):
 
 def export_onnx(net,f:Path,imgsz=512,**kwargs):
     d=kwargs.get("device",torch.device("cpu"))
-    single_ch=kwargs.get("single_ch",False)
-    if single_ch:
-        ch=1
-    else:
-        ch=3
     f=f.with_suffix(".onnx")
     if kwargs.get("no_pre",False):
         f=Path(str(f).replace(f.stem,f.stem+"+no_pre"))
@@ -91,9 +86,9 @@ def export_onnx(net,f:Path,imgsz=512,**kwargs):
     batch=kwargs["batch"]
     if batch<=0:batch=1
     if kwargs.get("no_pre", False):
-        im = torch.zeros(batch, ch, imgsz,imgsz).to(d)
+        im = torch.zeros(batch, 3, imgsz,imgsz).to(d)
     else:
-        im = torch.zeros(batch, imgsz, imgsz, ch).to(d)
+        im = torch.zeros(batch, imgsz, imgsz, 3).to(d)
 
 
     if "include_resize" in kwargs.keys() and kwargs.get("include_resize", False) :
@@ -287,7 +282,6 @@ def main():
     BACKBONE = config["base"].get("backbone","hgnetv2l")
     NUM_CLASSES = config["base"].getint("num_classes",21)
     PP = config["base"].get("header", "transformer")
-    single_ch = config["base"].getboolean("single_ch", False)
 
     if "advance" not in config:
         config["advance"] = {}
@@ -322,29 +316,15 @@ def main():
         device = torch.device('cpu')
     net.to(device)
     net.load_state_dict(torch.load(model_path, map_location=device))
-    if single_ch:
-        class WrapNet(nn.Module):
-            def __init__(self, net,*args, **kwargs) -> None:
-                super().__init__()
-                self.net=net
-            def forward(self,x):
-                x=x.repeat(1, 3, 1, 1)
-                return self.net(x)
-        net=WrapNet(net)
     net = net.eval()
     if hasattr(net,"fuse"):
         net.fuse()
     mod = sys.modules[__name__]
     for format in FORMATS:
         func = getattr(mod, "export_"+format)
-        name=Path(SAVE_PATH)/Path(model_path).name
-        if single_ch:
-            n=Path(str(name).replace(name.stem,name.stem+"_sch"))
-        else:
-            n=name
-        func(net,n,IMGSZ,fp16=args.half,batch=args.batch,
+        func(net,Path(SAVE_PATH)/Path(model_path).name,IMGSZ,fp16=args.half,batch=args.batch,
              no_pre=args.no_pre,no_post=args.no_post,include_resize=args.include_resize,
-             device=device,single_ch=single_ch
+             device=device
              )
 
 if __name__ == "__main__":

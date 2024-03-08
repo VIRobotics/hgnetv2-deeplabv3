@@ -12,7 +12,7 @@ from utils.check import check_amp
 from yiku.nets.training_utils import (get_lr_scheduler, set_optimizer_lr,
                                      weights_init)
 from utils.callbacks import LossHistory, EvalCallback
-from yiku.data.dataloader import DeeplabDataset, deeplab_dataset_collate
+from yiku.data.VOCdataloader import VOCDataset, deeplab_dataset_collate
 from utils.download import download_weights
 from utils.utils import show_config
 from utils.utils_fit import fit_one_epoch
@@ -388,15 +388,28 @@ def main():
             cudnn.benchmark = True
             model_train = model_train.cuda()
 
-    # ---------------------------#
-    #   读取数据集对应的txt
-    # ---------------------------#
-    with open(os.path.join(VOCdevkit_path, "VOC2007/ImageSets/Segmentation/train.txt"), "r") as f:
-        train_lines = f.readlines()
-    with open(os.path.join(VOCdevkit_path, "VOC2007/ImageSets/Segmentation/val.txt"), "r") as f:
-        val_lines = f.readlines()
-    num_train = len(train_lines)
-    num_val = len(val_lines)
+    if CUSTOM_DS:
+        DS_File, DS_Class = CUSTOM_DS.split(":")
+    else:
+        DS_File, DS_Class = False, ""
+    if DS_File and Path(DS_File).is_file() and Path(DS_File).suffix == ".py":
+        from importlib.util import spec_from_file_location
+        from importlib.util import module_from_spec
+        spec = spec_from_file_location(Path(DS_File).name, DS_File)
+        module = module_from_spec(spec)
+        spec.loader.exec_module(module)
+        ds_cls = getattr(module, DS_Class)
+        train_dataset = ds_cls(input_shape, num_classes, True, VOCdevkit_path)
+        val_dataset = ds_cls(input_shape, num_classes, False, VOCdevkit_path)
+    else:
+        train_dataset = VOCDataset( input_shape, num_classes, True, VOCdevkit_path)
+        val_dataset = VOCDataset( input_shape, num_classes, False, VOCdevkit_path)
+    num_train = len(train_dataset)
+    num_val = len(val_dataset)
+    if not aug_blur:
+        train_dataset.blur = None
+    if not aug_hsv:
+        train_dataset.hsv_jitter = None
 
     if local_rank == 0:
         show_config(
@@ -489,26 +502,7 @@ def main():
             raise ValueError("数据集过小，无法继续进行训练，请扩充数据集。")
 
 
-        if CUSTOM_DS:
-            DS_File,DS_Class=CUSTOM_DS.split(":")
-        else:
-            DS_File, DS_Class=False,""
-        if DS_File and Path(DS_File).is_file() and Path(DS_File).suffix==".py":
-            from importlib.util import spec_from_file_location
-            from importlib.util import module_from_spec
-            spec = spec_from_file_location(Path(DS_File).name, DS_File )
-            module = module_from_spec(spec)
-            spec.loader.exec_module(module)
-            ds_cls=getattr(module,DS_Class)
-            train_dataset = ds_cls(train_lines, input_shape, num_classes, True, VOCdevkit_path)
-            val_dataset = ds_cls(val_lines, input_shape, num_classes, False, VOCdevkit_path)
-        else:
-            train_dataset = DeeplabDataset(train_lines, input_shape, num_classes, True, VOCdevkit_path)
-            val_dataset = DeeplabDataset(val_lines, input_shape, num_classes, False, VOCdevkit_path)
-        if not aug_blur:
-            train_dataset.blur=None
-        if not aug_hsv:
-            train_dataset.hsv_jitter=None
+
 
         if distributed:
             train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset, shuffle=True, )
@@ -531,7 +525,7 @@ def main():
         #   记录eval的map曲线
         # ----------------------#
         if local_rank == 0:
-            eval_callback = EvalCallback(model, input_shape, num_classes, val_lines, VOCdevkit_path, log_dir, cuda, \
+            eval_callback = EvalCallback(model, input_shape, num_classes, val_dataset.annotation_lines, VOCdevkit_path, log_dir, cuda, \
                                          eval_flag=eval_flag, period=eval_period)
         else:
             eval_callback = None

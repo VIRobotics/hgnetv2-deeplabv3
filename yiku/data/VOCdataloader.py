@@ -6,101 +6,21 @@ import torch
 from PIL import Image
 from torch.utils.data.dataset import Dataset
 
-from yiku.data.process import cvtColor, preprocess_input,resize_image
+from yiku.data.process import cvtColor, preprocess_input,resize_data,bias_rand,flip_data,blur_data,hsv_jiiter
 
 
-def bias_rand(a=0.0, b=1.):
-    return np.random.rand() * (b - a) + a
 
 
-def resize_data(label,image,iw,ih,w,h,jitter):
-    new_ar = iw / ih * bias_rand(1 - jitter, 1 + jitter) / bias_rand(1 - jitter, 1 + jitter)
-    scale = bias_rand(0.25, 2)
-    if new_ar < 1:
-        nh = int(scale * h)
-        nw = int(nh * new_ar)
-    else:
-        nw = int(scale * w)
-        nh = int(nw / new_ar)
-    image = image.resize((nw, nh), Image.BICUBIC)
-    label = label.resize((nw, nh), Image.NEAREST)
-    return image,label,nw,nh
 
-
-def flip_data(label,image,*args):
-    flip = bias_rand() < .5
-    if flip:
-        image = image.transpose(Image.FLIP_LEFT_RIGHT)
-        label = label.transpose(Image.FLIP_LEFT_RIGHT)
-    return image,label
-
-
-def blur_data(label,image,*args):
-    blur = bias_rand() < 0.25
-    if blur:
-        image = cv2.GaussianBlur(image, (5, 5), 0)
-    return label,image
-def hsv_jiiter(image_data,h,s,v):
-    # ---------------------------------#
-    #   对图像进行色域变换
-    #   计算色域变换的参数
-    # ---------------------------------#
-    r = np.random.uniform(-1, 1, 3) * [h, s, v] + 1
-    # ---------------------------------#
-    #   将图像转到HSV上
-    # ---------------------------------#
-    hue, sat, val = cv2.split(cv2.cvtColor(image_data, cv2.COLOR_RGB2HSV))
-    dtype = image_data.dtype
-    # ---------------------------------#
-    #   应用变换
-    # ---------------------------------#
-    x = np.arange(0, 256, dtype=r.dtype)
-    lut_hue = ((x * r[0]) % 180).astype(dtype)
-    lut_sat = np.clip(x * r[1], 0, 255).astype(dtype)
-    lut_val = np.clip(x * r[2], 0, 255).astype(dtype)
-
-    image_data = cv2.merge((cv2.LUT(hue, lut_hue), cv2.LUT(sat, lut_sat), cv2.LUT(val, lut_val)))
-    return cv2.cvtColor(image_data, cv2.COLOR_HSV2RGB)
-
-class fmDataset(Dataset):
-    def __init__(self, annotation_lines, input_shape, num_classes, train, dataset_path,bb=""):
-        super(fmDataset, self).__init__()
-        self.annotation_lines = annotation_lines
-        self.length = len(annotation_lines)
-        self.bb=bb
-        self.input_shape = input_shape
-        self.num_classes = num_classes
-        self.train = train
-        self.dataset_path = dataset_path
-        self.blur=blur_data
-        self.hsv_jitter=hsv_jiiter
-
-    def __len__(self):
-        return self.length
-
-    def __getitem__(self, index):
-        annotation_line = self.annotation_lines[index]
-        name = annotation_line.split()[0]
-
-        # -------------------------------#
-        #   从文件中读取图像
-        # -------------------------------#
-        fm_name = os.path.join(os.path.join(self.dataset_path, "VOC2007/JPEGImages"), name + f"{self.bb}.fm")
-        fm=torch.load(fm_name)
-        png = Image.open(os.path.join(os.path.join(self.dataset_path, "VOC2007/SegmentationClass"), name + ".png"))
-        png.load()
-        # -------------------------------#
-        #   数据增强
-        # -------------------------------#
-        png = cvtColor(png)
-        png, _, _ = resize_image(png, self.input_shape, mode="L")
-        seg_labels = np.eye(self.num_classes + 1)[png.reshape([-1])]
-        seg_labels = seg_labels.reshape((int(self.input_shape[0]), int(self.input_shape[1]), self.num_classes + 1))
-        return fm, png, seg_labels
-
-class DeeplabDataset(Dataset):
-    def __init__(self, annotation_lines, input_shape, num_classes, train, dataset_path):
-        super(DeeplabDataset, self).__init__()
+class VOCDataset(Dataset):
+    def __init__(self,  input_shape, num_classes, train, dataset_path):
+        super(VOCDataset, self).__init__()
+        if train:
+            with open(os.path.join(dataset_path, "VOC2007/ImageSets/Segmentation/train.txt"), "r") as f:
+                annotation_lines = f.readlines()
+        else:
+            with open(os.path.join(dataset_path, "VOC2007/ImageSets/Segmentation/val.txt"), "r") as f:
+                annotation_lines = f.readlines()
         self.annotation_lines = annotation_lines
         self.length = len(annotation_lines)
         self.input_shape = input_shape

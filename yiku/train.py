@@ -12,7 +12,7 @@ from utils.check import check_amp
 from yiku.nets.training_utils import (get_lr_scheduler, set_optimizer_lr,
                                      weights_init)
 from utils.callbacks import LossHistory, EvalCallback
-from yiku.data.VOCdataloader import VOCDataset, deeplab_dataset_collate
+from yiku.data.AutoLoaderSelector import auto_ds_sel, deeplab_dataset_collate
 from utils.download import download_weights
 from utils.utils import show_config
 from utils.utils_fit import fit_one_epoch
@@ -118,6 +118,21 @@ def main():
     optimizer_type = config["advance"].get("optimizer_type", hyp_cfg.optimizer_type)
     momentum = config["advance"].getfloat("momentum", hyp_cfg.momentum)
     weight_decay= config["advance"].getfloat("weight_decay", hyp_cfg.weight_decay)
+    lr_decay_type = config["advance"].getfloat("lr_decay_type", hyp_cfg.lr_decay_type)
+
+    # Aug
+    jitter =  0.3
+    flip =  0.5
+    blur =  0.25
+    if config.has_section("augmentation"):
+        aug = config["augmentation"].getboolean("enable", True)
+        jitter=config["augmentation"].getfloat("jitter", 0.3 if aug else 0)
+        flip=config["augmentation"].getfloat("flip", 0.5 if aug else 0)
+        blur=config["augmentation"].getfloat("blur", 0.25 if aug else 0)
+    MIN_LR_MULTIPLY = config["advance"].getfloat("min_lr_mutliply", hyp_cfg.min_lr_mutliply)
+    optimizer_type = config["advance"].get("optimizer_type", hyp_cfg.optimizer_type)
+    momentum = config["advance"].getfloat("momentum", hyp_cfg.momentum)
+    weight_decay = config["advance"].getfloat("weight_decay", hyp_cfg.weight_decay)
     lr_decay_type = config["advance"].getfloat("lr_decay_type", hyp_cfg.lr_decay_type)
     signal.signal(signal.SIGINT, signal_handler)
     if CUSTOM_DS:
@@ -402,8 +417,8 @@ def main():
         train_dataset = ds_cls(input_shape, num_classes, True, VOCdevkit_path)
         val_dataset = ds_cls(input_shape, num_classes, False, VOCdevkit_path)
     else:
-        train_dataset = VOCDataset( input_shape, num_classes, True, VOCdevkit_path)
-        val_dataset = VOCDataset( input_shape, num_classes, False, VOCdevkit_path)
+        train_dataset = auto_ds_sel( input_shape, num_classes, True, VOCdevkit_path,jitter_prop=jitter,flip_prop=flip,blur_prop=blur)
+        val_dataset = auto_ds_sel( input_shape, num_classes, False, VOCdevkit_path)
     num_train = len(train_dataset)
     num_val = len(val_dataset)
     if not aug_blur:

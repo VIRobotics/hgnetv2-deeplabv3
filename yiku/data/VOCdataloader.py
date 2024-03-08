@@ -13,7 +13,7 @@ from yiku.data.process import cvtColor, preprocess_input,resize_data,bias_rand,f
 
 
 class VOCDataset(Dataset):
-    def __init__(self,  input_shape, num_classes, train, dataset_path):
+    def __init__(self,  input_shape, num_classes, train, dataset_path,**kwargs):
         super(VOCDataset, self).__init__()
         if train:
             with open(os.path.join(dataset_path, "VOC2007/ImageSets/Segmentation/train.txt"), "r") as f:
@@ -29,6 +29,7 @@ class VOCDataset(Dataset):
         self.dataset_path = dataset_path
         self.blur = blur_data
         self.hsv_jitter = hsv_jiiter
+        self.__dict__.update(kwargs)
 
     def __len__(self):
         return self.length
@@ -62,8 +63,6 @@ class VOCDataset(Dataset):
 
         return jpg, png, seg_labels
 
-
-
     def get_random_data(self, image, label, input_shape, jitter=.3, hue=.1, sat=0.7, val=0.3, random=True):
         image = cvtColor(image)
         label = Image.fromarray(np.array(label))
@@ -72,7 +71,6 @@ class VOCDataset(Dataset):
         # ------------------------------#
         iw, ih = image.size
         h, w = input_shape
-
 
         if not random:
             iw, ih = image.size
@@ -91,12 +89,12 @@ class VOCDataset(Dataset):
         # ------------------------------------------#
         #   对图像进行缩放并且进行长和宽的扭曲
         # ------------------------------------------#
-        image,label,nw,nh=resize_data(label,image,iw,ih,w,h,jitter)
+        image, label, nw, nh = resize_data(label, image, iw, ih, w, h, getattr(self, "jitter_prop", 0.3))
 
         # ------------------------------------------#
         #   翻转图像
         # ------------------------------------------#
-        image,label=flip_data(label,image)
+        image, label = flip_data(label, image, prop=getattr(self, "flip_prop", 0.5))
 
         # ------------------------------------------#
         #   将图像多余的部分加上灰条
@@ -116,12 +114,12 @@ class VOCDataset(Dataset):
         #   高斯模糊
         # ------------------------------------------#
         if callable(self.blur):
-            label,image_data=self.blur(label,image_data)
+            label, image_data = self.blur(label, image_data, prop=getattr(self, "blur_prop", 0.25))
 
         # ------------------------------------------#
         #   旋转
         # ------------------------------------------#
-        rotate = bias_rand() < 0.25
+        rotate = bias_rand() < getattr(self, "rotation_prop", 0.25)
         if rotate:
             center = (w // 2, h // 2)
             rotation = np.random.randint(-10, 11)
@@ -129,20 +127,9 @@ class VOCDataset(Dataset):
             image_data = cv2.warpAffine(image_data, M, (w, h), flags=cv2.INTER_CUBIC, borderValue=(128, 128, 128))
             label = cv2.warpAffine(np.array(label, np.uint8), M, (w, h), flags=cv2.INTER_NEAREST, borderValue=(0))
         if callable(self.hsv_jitter):
-            image_data=self.hsv_jitter(image_data,hue,sat,val)
+            image_data = self.hsv_jitter(image_data, hue, sat, val)
         return image_data, label
 
 
 # DataLoader中collate_fn使用
-def deeplab_dataset_collate(batch):
-    images = []
-    pngs = []
-    seg_labels = []
-    for img, png, labels in batch:
-        images.append(img)
-        pngs.append(png)
-        seg_labels.append(labels)
-    images = torch.from_numpy(np.array(images)).type(torch.FloatTensor)
-    pngs = torch.from_numpy(np.array(pngs)).long()
-    seg_labels = torch.from_numpy(np.array(seg_labels)).type(torch.FloatTensor)
-    return images, pngs, seg_labels
+

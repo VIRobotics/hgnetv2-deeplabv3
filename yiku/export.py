@@ -300,6 +300,10 @@ def main():
         from nets.model.PSPNet import pspnet
         net  = pspnet(num_classes=NUM_CLASSES, backbone=BACKBONE, downsample_factor=DOWNSAMPLE_FACTOR,
                        pretrained=False)
+    elif ARCH.lower()=="segformer":
+        from nets.model.SegFormer import SegFormer
+        net=SegFormer(num_classes=NUM_CLASSES, backbone=BACKBONE,
+                 pretrained=False)
     else:
         net = Labs(num_classes=NUM_CLASSES, backbone=BACKBONE,
                downsample_factor=DOWNSAMPLE_FACTOR, pretrained=False, header=PP, img_sz=[IMGSZ,IMGSZ])

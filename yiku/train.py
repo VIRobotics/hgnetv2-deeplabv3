@@ -108,7 +108,13 @@ def main():
     CUSTOM_DS=config["advance"].get("custom_datasets", None)
 
     DOWNSAMPLE_FACTOR = config["advance"].getint("downsample_factor",16)
-    DICE_LOSS= config["advance"].getboolean("dice_loss",True)
+    if num_classes<10:
+        DICE_LOSS=True
+    elif freeze_batch_size>10:
+        DICE_LOSS=True
+    else:
+        DICE_LOSS=False 
+    DICE_LOSS= config["advance"].getboolean("dice_loss",DICE_LOSS)
     focal_loss = config["advance"].getboolean("focal_loss", False)
     RESUME = args.resume
 

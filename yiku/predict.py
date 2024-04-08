@@ -196,7 +196,7 @@ def main():
         config["advance"] = {}
     CONFIG_DIR = os.path.dirname(os.path.abspath(args.config))
     IMGSZ = config["base"].getint("image_size", 512)
-    SAVE_PATH = os.path.join(CONFIG_DIR, config["base"].get("save_path","save"))
+    SAVE_PATH = config["base"].get("save_path","save")
     ARCH = config["base"].get("arch", "lab")
     if not os.path.isabs(SAVE_PATH):
         SAVE_PATH = os.path.join(CONFIG_DIR, SAVE_PATH)

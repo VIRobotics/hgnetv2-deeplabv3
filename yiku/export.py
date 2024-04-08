@@ -276,9 +276,9 @@ def main():
     DATASET_PATH = config["base"].get("dataset_path", 'VOCdevkit')
     if not os.path.isabs(DATASET_PATH):
         DATASET_PATH = os.path.join(CONFIG_DIR,DATASET_PATH)
-    SAVE_PATH = os.path.join(CONFIG_DIR,config["base"].get("save_path"))
+    SAVE_PATH = config["base"].get("save_path", "save")
     if not os.path.isabs(SAVE_PATH):
-        SAVE_PATH=os.path.join(CONFIG_DIR,SAVE_PATH)
+        SAVE_PATH = os.path.join(CONFIG_DIR, SAVE_PATH)
     BACKBONE = config["base"].get("backbone","hgnetv2l")
     NUM_CLASSES = config["base"].getint("num_classes",21)
     PP = config["base"].get("header", "transformer")

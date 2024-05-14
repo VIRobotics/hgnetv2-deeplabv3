@@ -26,7 +26,14 @@ def download_from_url(url,dir_path):
     hash = hashlib.sha256()
     fname = os.path.basename(a.path)
     if os.path.isfile(os.path.join(dir_path,fname)):
-        return os.path.join(dir_path,fname)
+        with open(os.path.isfile(os.path.join(dir_path,fname)),mode="rb")as f:
+            while True:
+                chunk = f.read(1024*16)
+                if not chunk:
+                    break
+                else:
+                    hash.update(chunk)
+        return os.path.join(dir_path,fname),hash.hexdigest()
     try:
         response=requests.get(url,stream=True,allow_redirects=True)
     except (requests.exceptions.SSLError) as e:

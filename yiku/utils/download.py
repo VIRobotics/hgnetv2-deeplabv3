@@ -1,8 +1,10 @@
+import json
+import hashlib
 import requests
 import re,os
 from urllib.parse import urlparse
 import pathlib
-from yiku.PATH import WTS_STORAGE_DIR
+from yiku.PATH import WTS_STORAGE_DIR,ASSETS
 from pip._vendor.rich.progress import (
     BarColumn,
     DownloadColumn,
@@ -13,14 +15,22 @@ from pip._vendor.rich.progress import (
     TimeRemainingColumn,
     Progress
 )
+import hashlib
 class  IntegrityError(Exception):
+    pass
+
+class  DownloadError(Exception):
     pass
 def download_from_url(url,dir_path):
     a = urlparse(url)
+    hash = hashlib.sha256()
     fname = os.path.basename(a.path)
     if os.path.isfile(os.path.join(dir_path,fname)):
         return os.path.join(dir_path,fname)
-    response=requests.get(url,stream=True,allow_redirects=True)
+    try:
+        response=requests.get(url,stream=True,allow_redirects=True)
+    except (requests.exceptions.SSLError) as e:
+        raise DownloadError
     if "Content-Disposition" in response.headers.keys():
         d=response.headers["Content-Disposition"]
         pathlib.Path(os.path.join(dir_path,fname)).touch()
@@ -48,9 +58,10 @@ def download_from_url(url,dir_path):
             for data in response.iter_content(block_size):
                 progress.update(task1,advance=len(data))
                 f.write(data)
+                hash.update(data)
 
         progress.stop()
-        return
+        return None,hash.hexdigest()
 
     total_size_in_bytes = int(response.headers.get('content-length', 0))
     # progress_bar = tqdm.tqdm(total=total_size_in_bytes, unit='iB', unit_scale=True)
@@ -72,13 +83,17 @@ def download_from_url(url,dir_path):
         for data in response.iter_content(block_size):
             progress.update(task1,advance=len(data))
             f.write(data)
+            hash.update(data)
             l=l+len(data)
     progress.stop()
     if total_size_in_bytes != 0 and l != total_size_in_bytes:
         os.remove(path)
         raise IntegrityError
 
-    return path
+    return path,hash.hexdigest()
+
+
+
 
 
 def download_weights(backbone, model_dir=WTS_STORAGE_DIR):
@@ -86,8 +101,10 @@ def download_weights(backbone, model_dir=WTS_STORAGE_DIR):
     from yiku.utils.download import download_from_url,IntegrityError
 
     download_urls = {
-        'mobilenetv2': ['https://github.com/bubbliiiing/deeplabv3-plus-pytorch/releases/download/v1.0/mobilenet_v2.pth.tar'],
-        'xception': ['https://github.com/bubbliiiing/deeplabv3-plus-pytorch/releases/download/v1.0/xception_pytorch_imagenet.pth'],
+        'mobilenetv2': ['https://github.com/bubbliiiing/deeplabv3-plus-pytorch/releases/download/v1.0/mobilenet_v2.pth.tar',
+                        "http://dl.aiblockly.com:8145/pretrained-model/seg/mobilenet_v2.pth.tar"],
+        'xception': ['https://github.com/bubbliiiing/deeplabv3-plus-pytorch/releases/download/v1.0/xception_pytorch_imagenet.pth',
+                     "http://dl.aiblockly.com:8145/pretrained-model/seg/xception_pytorch_imagenet.pth"],
         'hgnetv2l': ['https://github.com/VIRobotics/hgnetv2-deeplabv3/releases/download/v0.0.2-beta/hgnetv2l.pt',
                      "http://download.aiblockly.com/pretrained_wts/seg/hgnetv2l.pt",
                      "http://dl.aiblockly.com:8145/pretrained-model/seg/hgnetv2l.pt"],
@@ -119,9 +136,14 @@ def download_weights(backbone, model_dir=WTS_STORAGE_DIR):
 
     for url in urls:
         try:
-            download_from_url(url, model_dir)
-            break
-        except (IntegrityError,ConnectionError):
+            path,hash=download_from_url(url, model_dir)
+            with open(ASSETS / "checksum.json", 'rb') as fj:
+                sum_real = json.load(fj)[backbone]
+            if sum_real ==hash:
+                break
+            else:
+                UserWarning("数据校验失败，重试")
+        except (IntegrityError,ConnectionError,DownloadError):
             UserWarning("下载失败，重试")
 
 

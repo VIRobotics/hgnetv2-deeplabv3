@@ -84,7 +84,12 @@ def export_onnx(net,f:Path,imgsz=512,**kwargs):
         f=Path(str(f).replace(f.stem,f.stem+"+no_post"))
         kwargs["include_resize"]=False
     batch=kwargs["batch"]
-    if batch<=0:batch=1
+    if batch<=0:
+        batch=1
+        dynamic = {'images': {0: 'batch'}}
+        dynamic['output0'] = {0: 'batch'}
+    else:
+        dynamic = False
     if kwargs.get("no_pre", False):
         im = torch.zeros(batch, 3, imgsz,imgsz).to(d)
     else:
@@ -141,11 +146,7 @@ def export_onnx(net,f:Path,imgsz=512,**kwargs):
         net=Net_with_resize(net,inputsize=(imgsz,imgsz))
     else:
         net = Net_with_post(net)
-    if batch<=0:
-        dynamic = {'images': {0: 'batch'}}
-        dynamic['output0'] = {0: 'batch'}
-    else:
-        dynamic=False
+
 
     print(f'Starting export with onnx {onnx.__version__}.')
     torch.onnx.export(net,
@@ -162,6 +163,20 @@ def export_onnx(net,f:Path,imgsz=512,**kwargs):
     # Checks
     model_onnx = onnx.load(f)  # load onnx model
     onnx.checker.check_model(model_onnx)  # check onnx model
+    if dynamic:
+        b=-1
+    else:
+        b=batch
+    d={
+        "imgsz":[imgsz,imgsz],
+        "batch":b,
+        "names":kwargs["names"],
+        "num_classes":kwargs["num_classes"]
+    }
+    for k, v in d.items():
+        meta = model_onnx.metadata_props.add()
+        meta.key, meta.value = k, str(v)
+
 
     # Simplify onnx
     try:
@@ -172,9 +187,9 @@ def export_onnx(net,f:Path,imgsz=512,**kwargs):
             dynamic_input_shape=False,
             input_shapes=None)
         assert check, 'assert check failed'
-        onnx.save(model_onnx, f)
     except ImportError:
         print(f'onnx-simplifier not installed. SKIP')
+    onnx.save(model_onnx, f)
     return f
 
 def export_openvino(net,f,imgsz=512,fp16=True,**kwargs):
@@ -256,6 +271,7 @@ def export_paddle(net,f,imgsz=512,**kwargs):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--config',default="config.ini")
+    parser.add_argument('-n', '--names', type=str)
     parser.add_argument('-f', '--format',nargs="*" ,default=["onnx"],help="format to export (onnx,openvino)")
     parser.add_argument('--half', action='store_true',help="set this flag to export fp16 ov model")
     parser.add_argument("-b",'--batch', type=int,default=1,help="batch,set -1 for dynamic batch")
@@ -320,11 +336,16 @@ def main():
     if hasattr(net,"fuse"):
         net.fuse()
     mod = sys.modules[__name__]
+    # if args.names and os.path.isfile(args.names):
+    #     with open(args.names,mode="r")as f:
+    #         lines = [line.strip() for line in f.readlines() if line.strip() != ""]
+    #         if len(lines) > 0:
+    #             NUM_CLASSES=len(lines)
     for format in FORMATS:
         func = getattr(mod, "export_"+format)
         func(net,Path(SAVE_PATH)/Path(model_path).name,IMGSZ,fp16=args.half,batch=args.batch,
              no_pre=args.no_pre,no_post=args.no_post,include_resize=args.include_resize,
-             device=device
+             device=device,num_classes=NUM_CLASSES,names=["?"]*NUM_CLASSES
              )
 
 if __name__ == "__main__":

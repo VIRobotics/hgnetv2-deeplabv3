@@ -2,11 +2,13 @@ from yiku.utils.download import download_from_url,IntegrityError,DownloadError
 import tempfile
 from hashlib import sha256
 download_urls = {
-        'mobilenetv2': ['https://github.com/bubbliiiing/deeplabv3-plus-pytorch/releases/download/v1.0/mobilenet_v2.pth.tar',
+        'mobilenetv2': ["https://gitee.com/yiku-ai/hgnetv2-deeplabv3/releases/download/Assets/mobilenet_v2.pth.tar",
+                        'https://github.com/bubbliiiing/deeplabv3-plus-pytorch/releases/download/v1.0/mobilenet_v2.pth.tar',
                         "http://dl.aiblockly.com:8145/pretrained-model/seg/mobilenet_v2.pth.tar"],
         'xception': ['https://github.com/bubbliiiing/deeplabv3-plus-pytorch/releases/download/v1.0/xception_pytorch_imagenet.pth',
                      "http://dl.aiblockly.com:8145/pretrained-model/seg/xception_pytorch_imagenet.pth"],
-        'hgnetv2l': ['https://github.com/VIRobotics/hgnetv2-deeplabv3/releases/download/v0.0.2-beta/hgnetv2l.pt',
+        'hgnetv2l': ["https://gitee.com/yiku-ai/hgnetv2-deeplabv3/releases/download/Assets/hgnetv2l.pt",
+                     'https://github.com/VIRobotics/hgnetv2-deeplabv3/releases/download/v0.0.2-beta/hgnetv2l.pt',
                      "http://download.aiblockly.com/pretrained_wts/seg/hgnetv2l.pt",
                      "http://dl.aiblockly.com:8145/pretrained-model/seg/hgnetv2l.pt"],
         "hgnetv2x": ["https://github.com/VIRobotics/hgnetv2-deeplabv3/releases/download/v0.0.2-beta/hgnetv2x.pt",
@@ -14,7 +16,8 @@ download_urls = {
                      "http://dl.aiblockly.com:8145/pretrained-model/seg/hgnetv2x.pt"],
         "yolov8s": ["https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8s-cls.pt"],
         "yolov8m": ["https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8m-cls.pt"],
-        "resnet50":["https://s3.amazonaws.com/pytorch/models/resnet50-19c8e357.pth",
+        "resnet50":["https://gitee.com/yiku-ai/hgnetv2-deeplabv3/releases/download/Assets/resnet50-19c8e357.pth",
+                    "https://s3.amazonaws.com/pytorch/models/resnet50-19c8e357.pth",
                    "http://download.aiblockly.com/pretrained_wts/seg/resnet50-19c8e357.pth"],
         "vgg":["https://download.pytorch.org/models/vgg16-397923af.pth"],
         'mobilenetv3l': [

@@ -1,6 +1,7 @@
-## Torch版的语义分割全家桶（大量模型一键训练与导出）
+# Torch版的语义分割全家桶（大量模型一键训练与导出）
 
-deeplabv3 translab unet segformer pspnet hardnet
+## 简介
+yiku-seg 是一个由仪酷开发的语义分割工具，其中集成了大量的模型，同时使用主干网络和分割头分离的写法，使得在保证了傻瓜化训练的基础上,保留了模型配置的灵活性，其中包含了Translab等特色模型。在本文中将介绍如何使用yiku-seg训练一个模型
 
 ---
 
@@ -63,8 +64,9 @@ BiliBili视频中的原仓库地址为：https://github.com/bubbliiiing/deeplabv
 
 ### 所需环境
 
-参看requirements.txt
+参看[requirements.txt](https://github.com/VIRobotics/hgnetv2-deeplabv3/blob/main/requirements.txt)
 
+建议先安装pytorch
 
 
 ### 训练步骤
@@ -72,10 +74,31 @@ BiliBili视频中的原仓库地址为：https://github.com/bubbliiiing/deeplabv
 #### a、训练voc数据集
 
 1、`pip install git+https://gitee.com/yiku-ai/hgnetv2-deeplabv3` 安装
-2、下载config.ini 根据实际情况修改  
-3、命令行输入`siren.train -c config文件路径`。
 
-4、~~实际你也可以`python -m yiku.train -c config.ini`~~
+2、VOC拓展数据集的百度网盘如下：
+链接: https://pan.baidu.com/s/1vkk3lMheUm6IjTXznlg7Ng 提取码: 44mk
+
+3、下载config.ini 根据实际情况修改一般的，我们只需要去修改config.ini里面base字段的那些参数
+```ini
+[base]
+frozen_batch-size=4
+unfrozen_batch-size=2
+frozen_epoch=100
+unfrozen_epoch=50
+fp16=true
+dataset_path=VOCdevkit
+save_path=logs
+num_classes=21
+backbone=hgnetv2l
+image_size=512
+header = transformer
+```     
+其中batchsize和你的显存大小有关path是路径相关的。num_classes一般是多少类 header和backbone与模型的结构有关，**建议打开config.ini里面有对参数的详细解释**
+
+
+4、命令行输入`siren.train -c config文件路径`。
+
+5、~~实际你也可以`python -m yiku.train -c config.ini`~~
 #### b、训练自己的数据集
 
 1、本文使用VOC格式进行训练。  

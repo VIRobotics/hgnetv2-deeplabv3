@@ -5,15 +5,13 @@ from torch import nn
 import torch
 import os
 from yiku.PATH import WTS_STORAGE_DIR
+
 try:
     from rich.console import Console
     from rich.table import Table
 except ImportError:
     from pip._vendor.rich.table import Table
     from pip._vendor.rich.console import Console
-
-
-
 
 
 # ---------------------------------------------------#
@@ -24,18 +22,14 @@ def get_lr(optimizer):
         return param_group['lr']
 
 
-
-
 def show_config(**kwargs):
     table = Table(title="ConfigurationTable参数详情")
     table.add_column("参数Arg", justify="right", style="cyan", no_wrap=True)
     table.add_column("值Value", style="magenta")
     for key, value in kwargs.items():
-        table.add_row(key,str(value))
+        table.add_row(key, str(value))
     console = Console()
     console.print(table)
-
-
 
 
 def fuse_conv_and_bn(module):
@@ -69,7 +63,10 @@ def fuse_conv_and_bn(module):
     del module
     return module_output
 
+
 import requests
+
+
 def get_github_assets(repo='ultralytics/assets', version='latest', retry=False):
     """Return GitHub repo tag and assets (i.e. ['yolov8n.pt', 'yolov8s.pt', ...])."""
     if version != 'latest':

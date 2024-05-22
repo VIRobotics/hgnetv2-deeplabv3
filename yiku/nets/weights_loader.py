@@ -2,7 +2,7 @@ import torch
 import collections
 import numpy as np
 from copy import deepcopy
-from yiku.nets.deeplabv3_training import weights_init
+from yiku.nets.training_utils import weights_init
 from yiku.nets.model.Labs.labs import Labs
 
 import os

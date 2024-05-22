@@ -8,6 +8,7 @@ import torch
 import torch.nn.functional as F
 from PIL import Image
 from distutils.version import LooseVersion
+
 try:
     from rich import print
 except ImportError:
@@ -15,6 +16,8 @@ except ImportError:
 
     warnings.filterwarnings('ignore', message="Setuptools is replacing distutils.", category=UserWarning)
     from pip._vendor.rich import print
+
+
 def f_score(inputs, target, beta=1, smooth=1e-5, threhold=0.5):
     n, c, h, w = inputs.size()
     nt, ht, wt, ct = target.size()
@@ -135,10 +138,11 @@ def compute_mIoU(gt_dir, pred_dir, png_name_list, num_classes, name_classes=None
     # -----------------------------------------------------------------#
     print('===> mIoU: ' + str(round(np.nanmean(IoUs) * 100, 2)) + '; mPA: ' + str(
         round(np.nanmean(PA_Recall) * 100, 2)) + '; Accuracy: ' + str(round(per_Accuracy(hist) * 100, 2)))
-    if LooseVersion(np.__version__)>=LooseVersion("1.24"):
+    if LooseVersion(np.__version__) >= LooseVersion("1.24"):
         return np.array(hist, int), IoUs, PA_Recall, Precision
     else:
         return np.array(hist, np.int), IoUs, PA_Recall, Precision
+
 
 def adjust_axes(r, t, fig, axes):
     bb = t.get_window_extent(renderer=r)

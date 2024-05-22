@@ -32,7 +32,7 @@ def split(dataset_path, th=0.8):
 
 
 class SimpleDataset(Dataset):
-    def __init__(self, input_shape, num_classes, train, dataset_path,**kwargs):
+    def __init__(self, input_shape, num_classes, train, dataset_path, **kwargs):
         super(SimpleDataset, self).__init__()
         if train:
             if not os.path.exists(Path(dataset_path) / "train.txt"):
@@ -113,12 +113,12 @@ class SimpleDataset(Dataset):
         # ------------------------------------------#
         #   对图像进行缩放并且进行长和宽的扭曲
         # ------------------------------------------#
-        image, label, nw, nh = resize_data(label, image, iw, ih, w, h, getattr(self,"jitter_prop",0.3))
+        image, label, nw, nh = resize_data(label, image, iw, ih, w, h, getattr(self, "jitter_prop", 0.3))
 
         # ------------------------------------------#
         #   翻转图像
         # ------------------------------------------#
-        image, label = flip_data(label, image,prop=getattr(self,"flip_prop",0.5))
+        image, label = flip_data(label, image, prop=getattr(self, "flip_prop", 0.5))
 
         # ------------------------------------------#
         #   将图像多余的部分加上灰条
@@ -138,12 +138,12 @@ class SimpleDataset(Dataset):
         #   高斯模糊
         # ------------------------------------------#
         if callable(self.blur):
-            label, image_data = self.blur(label, image_data,prop=getattr(self,"blur_prop",0.25))
+            label, image_data = self.blur(label, image_data, prop=getattr(self, "blur_prop", 0.25))
 
         # ------------------------------------------#
         #   旋转
         # ------------------------------------------#
-        rotate = bias_rand() < getattr(self,"rotation_prop",0.25)
+        rotate = bias_rand() < getattr(self, "rotation_prop", 0.25)
         if rotate:
             center = (w // 2, h // 2)
             rotation = np.random.randint(-10, 11)

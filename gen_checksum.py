@@ -27,6 +27,10 @@ download_urls = {
         "hardnet":["https://github.com/VIRobotics/hgnetv2-deeplabv3/releases/download/v0.0.2-beta/hardnet_backbone.pt",
                    "http://dl.aiblockly.com:8145/pretrained-model/seg/hardnet_backbone.pt"]
     }
+for i in range(6):
+    download_urls[f"b{i}"] = [
+        f"https://github.com/VIRobotics/hgnetv2-deeplabv3/releases/download/v0.0.2-beta/segformer_b{i}_backbone_weights.pth"
+        , f"http://dl.aiblockly.com:8145/pretrained-model/seg/segformer_b{i}_backbone_weights.pth"]
 
 def download_all_and_checksum():
     checksum = dict()
@@ -35,7 +39,7 @@ def download_all_and_checksum():
         with tempfile.TemporaryDirectory() as tmpdirname:
             for url in urls:
                 try:
-                    path=download_from_url(url, tmpdirname)
+                    path,_=download_from_url(url, tmpdirname)
                     with open(path,mode="rb")as f:
                         sum=sha256()
                         sum.update(f.read())

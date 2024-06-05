@@ -25,14 +25,14 @@ class VOCDataset(Dataset):
         self.__label=[]
         for name in annotation_lines:
             name = name.split()[0]
-            for sfx in ["*.png", "*.jpg", "*.jpeg", "*.bmp", "*.tiff"]:
+            for sfx in [".png", ".jpg", ".jpeg", ".bmp", ".tiff"]:
                 if (os.path.isfile(os.path.join(os.path.join(self.dataset_path, "VOC2007/JPEGImages"), name + sfx))
                         and os.path.isfile(os.path.join(os.path.join(self.dataset_path, "VOC2007/SegmentationClass"), name + ".png"))):
-                    self.__img.append(os.path.isfile(os.path.join(os.path.join(self.dataset_path, "VOC2007/JPEGImages"), name + sfx)))
+                    self.__img.append(os.path.join(os.path.join(self.dataset_path, "VOC2007/JPEGImages"), name + sfx))
                     self.__label.append(os.path.join(os.path.join(self.dataset_path, "VOC2007/SegmentationClass"), name + ".png"))
                     break
         self.annotation_lines = annotation_lines
-        self.length = len(annotation_lines)
+        self.length = len(self.__img)
         self.input_shape = input_shape
         self.num_classes = num_classes
         self.train = train

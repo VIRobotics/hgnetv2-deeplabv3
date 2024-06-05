@@ -5,7 +5,7 @@ import re, os
 from urllib.parse import urlparse
 import pathlib
 from yiku.PATH import WTS_STORAGE_DIR, ASSETS
-from pip._vendor.rich.progress import (
+from rich.progress import (
     BarColumn,
     DownloadColumn,
     TransferSpeedColumn,
@@ -31,7 +31,7 @@ def download_from_url(url, dir_path):
     hash = hashlib.sha256()
     fname = os.path.basename(a.path)
     if os.path.isfile(os.path.join(dir_path, fname)):
-        with open(os.path.isfile(os.path.join(dir_path, fname)), mode="rb") as f:
+        with open(os.path.join(dir_path, fname), mode="rb") as f:
             while True:
                 chunk = f.read(1024 * 16)
                 if not chunk:

@@ -17,15 +17,15 @@ from utils.download import download_weights
 from utils.utils import show_config
 from utils.utils_fit import fit_one_epoch
 from pathlib import Path
-try:
-    from rich import print,emoji
-    from rich.console import Console
-except ImportError:
-    import warnings
 
-    warnings.filterwarnings('ignore', message="Setuptools is replacing distutils.", category=UserWarning)
-    from pip._vendor.rich import print,emoji
-    from pip._vendor.rich.console import Console
+from rich import print,emoji
+from rich.console import Console
+# except ImportError:
+#     import warnings
+#
+#     warnings.filterwarnings('ignore', message="Setuptools is replacing distutils.", category=UserWarning)
+#     from pip._vendor.rich import print,emoji
+#     from pip._vendor.rich.console import Console
 '''
 训练自己的语义分割模型一定需要注意以下几点：
 1、训练前仔细检查自己的格式是否满足要求，该库要求数据集格式为VOC格式，需要准备好的内容有输入图片和标签

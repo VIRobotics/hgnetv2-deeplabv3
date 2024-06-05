@@ -8,7 +8,7 @@ lfw/
 logs/
 model_data/
 .temp_miou_out/
-
+config.ini
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

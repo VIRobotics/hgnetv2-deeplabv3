@@ -1,5 +1,4 @@
 import os
-
 import cv2
 import numpy as np
 import torch
@@ -15,18 +14,29 @@ from yiku.data.process import cvtColor, preprocess_input,resize_data,bias_rand,f
 class VOCDataset(Dataset):
     def __init__(self,  input_shape, num_classes, train, dataset_path,**kwargs):
         super(VOCDataset, self).__init__()
+        self.dataset_path = dataset_path
         if train:
             with open(os.path.join(dataset_path, "VOC2007/ImageSets/Segmentation/train.txt"), "r") as f:
                 annotation_lines = f.readlines()
         else:
             with open(os.path.join(dataset_path, "VOC2007/ImageSets/Segmentation/val.txt"), "r") as f:
                 annotation_lines = f.readlines()
+        self.__img=[]
+        self.__label=[]
+        for name in annotation_lines:
+            name = name.split()[0]
+            for sfx in ["*.png", "*.jpg", "*.jpeg", "*.bmp", "*.tiff"]:
+                if (os.path.isfile(os.path.join(os.path.join(self.dataset_path, "VOC2007/JPEGImages"), name + sfx))
+                        and os.path.isfile(os.path.join(os.path.join(self.dataset_path, "VOC2007/SegmentationClass"), name + ".png"))):
+                    self.__img.append(os.path.isfile(os.path.join(os.path.join(self.dataset_path, "VOC2007/JPEGImages"), name + sfx)))
+                    self.__label.append(os.path.join(os.path.join(self.dataset_path, "VOC2007/SegmentationClass"), name + ".png"))
+                    break
         self.annotation_lines = annotation_lines
         self.length = len(annotation_lines)
         self.input_shape = input_shape
         self.num_classes = num_classes
         self.train = train
-        self.dataset_path = dataset_path
+
         self.blur = blur_data
         self.hsv_jitter = hsv_jiiter
         self.__dict__.update(kwargs)
@@ -35,15 +45,13 @@ class VOCDataset(Dataset):
         return self.length
 
     def __getitem__(self, index):
-        annotation_line = self.annotation_lines[index]
-        name = annotation_line.split()[0]
 
             # -------------------------------#
             #   从文件中读取图像
             # -------------------------------#
-        jpg = Image.open(os.path.join(os.path.join(self.dataset_path, "VOC2007/JPEGImages"), name + ".jpg"))
+        jpg = Image.open(self.__img[index])
         jpg.load()
-        png = Image.open(os.path.join(os.path.join(self.dataset_path, "VOC2007/SegmentationClass"), name + ".png"))
+        png = Image.open(self.__label[index])
         png.load()
             # -------------------------------#
             #   数据增强

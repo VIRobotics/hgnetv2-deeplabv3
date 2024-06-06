@@ -29,7 +29,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='yiku_seg',  # name of pypi package
-    version="0.1.5",  # version of pypi package
+    version="0.1.5a2",  # version of pypi package
     python_requires='>=3.8',
     license='MIT',
     description=('A Segment toolkit '),
@@ -40,8 +40,10 @@ setup(
     author_email='hetongtech@hotmail.com',
     packages=['yiku'] + [str(x) for x in Path('yiku').rglob('*/') if x.is_dir() and '__' not in str(x)],
     package_data={
-        '': ['*.jpg',"*.pth","*.json"],
-        'yiku.assets': ['*.jpg',"*.pth","*.json"]},
+        '': ['*.jpg',"*.pth","*.json","*.exe"],
+        'yiku.assets': ['*.jpg',"*.pth","*.json"],
+        "yiku.assets.exec": ["*.exe"]
+    },
     include_package_data=True,
     install_requires=parse_requirements(PARENT / 'requirements.txt'),
     classifiers=[

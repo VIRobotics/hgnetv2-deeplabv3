@@ -1,0 +1,54 @@
+[project]
+name = "yiku_seg"
+version = "0.1.5a2"
+dynamic = ["dependencies"]
+readme = "README.md"
+requires-python = ">=3.8"
+description = 'A Segment toolkit '
+license= { "text" = "MIT" }
+keywords = ['machine-learning', 'deep-learning', 'vision', 'ML', 'DL', 'AI', 'ImageSegment' ,'DeepLab', 'Transformer']
+authors = [
+    { name = "DrEgg" }
+]
+maintainers = [
+    { name = "DrEgg" }
+]
+classifiers = [
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Topic :: Software Development',
+        'Topic :: Scientific/Engineering',
+        'Topic :: Scientific/Engineering :: Artificial Intelligence',
+        'Topic :: Scientific/Engineering :: Image Segmentation',
+        'Operating System :: POSIX :: Linux',
+        "License :: OSI Approved :: MIT License",
+        'Operating System :: Microsoft :: Windows', ]
+
+[build-system]
+requires = ["setuptools>=40.8.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.pip-compile.optional-dependencies]
+openvino = [
+        "openvino>=2024.0.0","nncf"
+]
+paddle = [
+        "x2paddle",
+]
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["./requirements.txt"] }
+version = { attr = "yiku.__version__" }
+
+[project.scripts]
+"siren.train" = "yiku.train:main"
+"siren.export" = "yiku.export:main"
+"siren.pred" = "yiku.predict:main"
+
+[tool.setuptools]  # configuration specific to the `setuptools` build backend.
+packages ={ find = { where = ["."], include = ["yiku", "yiku.*"] } }# ["yiku", "yiku.*"]
+#package-dir = {"" = ""}
+package-data = {"yiku.assets" = ["*","exec/*"] }

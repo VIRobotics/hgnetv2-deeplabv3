@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from setuptools import setup
-
+import yiku
 # Settings
 FILE = Path(__file__).resolve()
 PARENT = FILE.parent  # root directory
@@ -29,7 +29,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='yiku_seg',  # name of pypi package
-    version="0.1.5a2",  # version of pypi package
+    version=yiku.__version__,  # version of pypi package
     python_requires='>=3.8',
     license='MIT',
     description=('A Segment toolkit '),

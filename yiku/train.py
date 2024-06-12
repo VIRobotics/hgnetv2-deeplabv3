@@ -3,7 +3,7 @@ import time
 
 import numpy as np
 import torch
-import torch.backends.cudnn as cudnn
+
 import torch.distributed as dist
 import torch.optim as optim
 from torch.utils.data import DataLoader
@@ -101,7 +101,7 @@ def main():
     num_classes = config["base"].getint("num_classes",21)
     pp = config["base"].get("header", "transformer")
     num_workers = config["base"].getint("num_workers",4)
-
+    fp16 = config["base"].getboolean("fp16",True)
     if "advance" not in config:
         config["advance"] = {}
 
@@ -135,11 +135,6 @@ def main():
         jitter=config["augmentation"].getfloat("jitter", 0.3 if aug else 0)
         flip=config["augmentation"].getfloat("flip", 0.5 if aug else 0)
         blur=config["augmentation"].getfloat("blur", 0.25 if aug else 0)
-    MIN_LR_MULTIPLY = config["advance"].getfloat("min_lr_mutliply", hyp_cfg.min_lr_mutliply)
-    optimizer_type = config["advance"].get("optimizer_type", hyp_cfg.optimizer_type)
-    momentum = config["advance"].getfloat("momentum", hyp_cfg.momentum)
-    weight_decay = config["advance"].getfloat("weight_decay", hyp_cfg.weight_decay)
-    lr_decay_type = config["advance"].getfloat("lr_decay_type", hyp_cfg.lr_decay_type)
     signal.signal(signal.SIGINT, signal_handler)
     if CUSTOM_DS:
         DS_File, DS_Class = CUSTOM_DS.split(":")
@@ -161,6 +156,10 @@ def main():
     #           没有GPU可以设置成False
     # ---------------------------------#
     cuda = torch.cuda.is_available()
+    if cuda:
+        import torch.backends.cudnn as cudnn
+    else:
+        cudnn=None
     # ---------------------------------------------------------------------#
     #   distributed     用于指定是否使用单机多卡分布式运行
     #                   终端指令仅支持Ubuntu。CUDA_VISIBLE_DEVICES用于在Ubuntu下指定显卡。
@@ -181,10 +180,7 @@ def main():
     #   fp16        是否使用混合精度训练
     #               可减少约一半的显存、需要pytorch1.7.1以上
     # ---------------------------------------------------------------------#
-    if cuda and torch.cuda.is_available():
-        fp16 = check_amp()
-    else:
-        fp16 = False
+    fp16 = cuda and check_amp() and fp16
     # ----------------------------------------------------------------------------------------------------------------------------#
     #   pretrained      是否使用主干网络的预训练权重，此处使用的是主干的权重，因此是在模型构建的时候进行加载的。
     #                   如果设置了model_path，则主干的权值无需加载，pretrained的值无意义。
@@ -353,7 +349,7 @@ def main():
         if local_rank == 0:
             print("\nSuccessful Load Key:", str(load_key)[:500], "……\nSuccessful Load Key Num:", len(load_key))
             print("\nFail To Load Key:", str(no_load_key)[:500], "……\nFail To Load Key num:", len(no_load_key))
-            print("\n[bold blue]温馨提示，head部分没有载入是正常现象，Backbone部分没有载入是错误的。")
+            print("\n[bold blue] head部分没有载入是正常现象，Backbone部分没有载入是错误的。")
 
     # ----------------------#
     #   记录Loss

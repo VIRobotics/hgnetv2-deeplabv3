@@ -143,8 +143,6 @@ def fit_one_epoch(model_train, model, loss_history, eval_callback, optimizer, ep
     val_f_score = 0
 
     if local_rank == 0:
-        # pbar = tqdm(total=epoch_step, desc=f'epoch {epoch + 1}/{Epoch}', postfix=dict, mininterval=0.3, leave=False,
-        #             ncols=150)
         rich_pbar = Progress(SpinnerColumn(),
                              "🐱", "{task.description}",
                              BarColumn(),
@@ -246,15 +244,10 @@ def fit_one_epoch(model_train, model, loss_history, eval_callback, optimizer, ep
             rich_pbar.update(task1, total_loss=total_loss / (iteration + 1),
                              f_score=total_f_score / (iteration + 1),
                              lr=get_lr(optimizer), advance=1, gmem=mem)
-            # pbar.set_postfix(**{'total_loss': total_loss / (iteration + 1),
-            #                     'f_score': total_f_score / (iteration + 1),
-            #                     'lr': get_lr(optimizer)})
-            # pbar.update(1)
 
     model_train.eval()
     if local_rank == 0:
         rich_pbar.stop()
-        # pbar = tqdm(total=epoch_step_val, desc=f'Epoch {epoch + 1}/{Epoch}', postfix=dict, mininterval=0.3)
         del rich_pbar
         rich_pbar = Progress(SpinnerColumn(),
                              "🌕", "{task.description}",
@@ -323,14 +316,9 @@ def fit_one_epoch(model_train, model, loss_history, eval_callback, optimizer, ep
             if local_rank == 0:
                 rich_pbar.update(task1, val_loss=val_loss / (iteration + 1),
                                  f_score=val_f_score / (iteration + 1), miou=mIoU, advance=1)
-                # pbar.set_postfix(**{'val_loss': val_loss / (iteration + 1),
-                #                     'f_score': val_f_score / (iteration + 1),
-                #                     'lr': get_lr(optimizer)})
-                # pbar.update(1)
 
     if local_rank == 0:
         rich_pbar.stop()
-        # pbar.close()
         miou = mious[-1]
         mpa = mpas[-1]
         flag = len(loss_history.val_loss) <= 1 or miou > max(loss_history.miou)
@@ -362,9 +350,6 @@ def fit_one_epoch(model_train, model, loss_history, eval_callback, optimizer, ep
         meta["curr_epoch"] = epoch
         meta["epoch_step_val"] = epoch_step_val
         meta["curr_val_loss"] = val_loss
-        # if (epoch + 1) % save_period == 0 or epoch + 1 == Epoch:
-        #     torch.save(model.state_dict(), Path(save_dir)/('ep%03d-loss%.3f-val_loss%.3f.pth' % (
-        #         epoch + 1, total_loss / epoch_step, val_loss / epoch_step_val)))
         if flag:
             print('⚾ [green1] Save best model to %s' % str(Path(save_dir) / "best.pth"))
             with open(Path(save_dir) / "best.pth", mode="wb") as f:

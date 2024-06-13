@@ -174,8 +174,8 @@ def export_onnx(net, f: Path, imgsz=512, **kwargs):
     for k, v in di.items():
         meta = model_onnx.metadata_props.add()
         meta.key, meta.value = k, str(v)
-    with open(f.with_suffix(".onnx"), mode="w") as f:
-        json.dump(di, f, indent=4)
+    with open(f.with_suffix(".json"), mode="w") as f_json:
+        json.dump(di, f_json, indent=4)
 
     # Simplify onnx
     try:

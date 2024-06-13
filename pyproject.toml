@@ -1,7 +1,6 @@
 [project]
 name = "yiku_seg"
-version = "0.1.5a2"
-dynamic = ["dependencies"]
+dynamic = ["dependencies","version"]
 readme = "README.md"
 requires-python = ">=3.8"
 description = 'A Segment toolkit '
@@ -22,7 +21,7 @@ classifiers = [
         'Topic :: Software Development',
         'Topic :: Scientific/Engineering',
         'Topic :: Scientific/Engineering :: Artificial Intelligence',
-        'Topic :: Scientific/Engineering :: Image Segmentation',
+        'Environment :: GPU :: NVIDIA CUDA',
         'Operating System :: POSIX :: Linux',
         "License :: OSI Approved :: MIT License",
         'Operating System :: Microsoft :: Windows', ]

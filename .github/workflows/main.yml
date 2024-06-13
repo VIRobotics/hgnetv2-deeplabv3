@@ -4,6 +4,7 @@ on:
   # run when a release has been created
   release:
     types: [created]
+  workflow_dispatch:
   # push:
   #   branches:
   #     - "go_wheel_*"
@@ -14,34 +15,9 @@ on:
 
 jobs:
   build_wheels:
-    name: ${{ matrix.wheel_mode }} wheels ${{ matrix.python }} on ${{ matrix.os }} ${{ matrix.os == 'ubuntu-22.04' && matrix.linux_archs || '' }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        # emulated wheels on linux take too much time, split wheels into multiple runs
-        python:
-          - "cp310-*"
-        wheel_mode:
-          - 'pure-python'
-        os:
-          - "ubuntu-22.04"
-        linux_archs:
-          # this is only meaningful on linux. windows and macos ignore exclude all but one arch
-          - "x86_64"
-
-        include:
-          # create pure python build
-          - os: ubuntu-22.04
-            wheel_mode: pure-python
-            python: "cp-310*"
-
-        exclude:
-          - os: "windows-2022"
-            linux_archs: "aarch64"
-          - os: "macos-12"
-            linux_archs: "aarch64"
-
-      fail-fast: false
+    name: "run_build"
+    runs-on: "ubuntu-22.04"
+     
 
     steps:
       - uses: actions/checkout@v4
@@ -53,15 +29,17 @@ jobs:
           python-version: "3.10"
 
       - name: Build pure-python wheel
-        if: ${{ matrix.wheel_mode == 'pure-python' && runner.os == 'Linux' }}
+        env:
+          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
         run: |
           python -m pip install --upgrade pip
           pip --version
-          pip install wheel
+          pip install wheel build twine
           pip list
-          python setup.py bdist_wheel
+          python -m build
+          python -m twine upload dist/* -u __token__ -p $PYPI_TOKEN
           mkdir -p ./wheelhouse
-          cp dist/*.whl  ./wheelhouse/
+          cp dist/*  ./wheelhouse/
 
       # - uses: actions/upload-artifact@v3
       #   with:
@@ -69,7 +47,7 @@ jobs:
 
       - name: Upload wheels to release
         # upload the generated wheels to the github release
-        uses: sqlalchemyorg/upload-release-assets@sa
+        uses: AButler/upload-release-assets@v3.0
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          files: './wheelhouse/*.whl'
+          files: './wheelhouse/*'

@@ -3,12 +3,18 @@
 ## 简介
 yiku-seg 是一个由仪酷开发的语义分割工具，其中集成了大量的模型，同时使用主干网络和分割头分离的写法，使得在保证了傻瓜化训练的基础上,保留了模型配置的灵活性，其中包含了Translab等特色模型。在本文中将介绍如何使用yiku-seg训练一个模型
 
+```pip install yiku_seg```
+
 ---
 
 
 ## Top News
 
 <details> <summary>更新日志：增加数据增强开关</summary>
+
+**`2024-06`** : **数据集支持多种文件格式**
+
+下载源优化，这下国内也可以流程用了
 
 
 **`2024-03`** : **增加数据增强开关 增加一堆模型**
@@ -73,7 +79,7 @@ BiliBili视频中的原仓库地址为：https://github.com/bubbliiiing/deeplabv
 
 #### a、训练voc数据集
 
-1、`pip install git+https://gitee.com/yiku-ai/hgnetv2-deeplabv3` 安装
+1、`pip install yiku_seg` 安装
 
 2、VOC拓展数据集的百度网盘如下：
 链接: https://pan.baidu.com/s/1vkk3lMheUm6IjTXznlg7Ng 提取码: 44mk

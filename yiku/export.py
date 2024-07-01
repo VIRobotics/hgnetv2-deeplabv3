@@ -7,7 +7,21 @@ from torch import nn
 import torch.nn.functional as F
 import onnx
 import subprocess
+try:
+    import sentry_sdk
 
+    sentry_sdk.init(
+        dsn="https://d5afa0d557b2491a2aa9e34e1c803cf2@o4507524861853696.ingest.de.sentry.io/4507524873977936",
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for performance monitoring.
+        traces_sample_rate=1.0,
+    # Set profiles_sample_rate to 1.0 to profile 100%
+    # of sampled transactions.
+    # We recommend adjusting this value in production.
+        profiles_sample_rate=1.0,
+)
+except Exception as e:
+    print("远程日志已经禁用")
 sys.path.append(os.getcwd())
 from yiku.nets.model.Labs.labs import Labs
 from pathlib import Path

@@ -79,8 +79,9 @@ def signal_handler(signal, frame):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c', '--config',default="config.ini")
-    parser.add_argument('-r', '--resume', action="store_true")
+    parser.add_argument('-c', '--config',default="config.ini",help="Path of config file")
+    parser.add_argument('-r', '--resume', action="store_true",help="Resume training from best.pth")
+    parser.add_argument('-p', '--pretrain', default="True",help="Pretrain,<True| False | path of pth>,default true")
     config = configparser.ConfigParser()
     args = parser.parse_args()
     if os.path.exists(args.config):
@@ -202,7 +203,12 @@ def main():
     #                   如果不设置model_path，pretrained = True，此时仅加载主干开始训练。
     #                   如果不设置model_path，pretrained = False，Freeze_Train = Fasle，此时从0开始训练，且没有冻结主干的过程。
     # ----------------------------------------------------------------------------------------------------------------------------#
-    pretrained = True
+    pretrained = args.pretrain
+    if not os.path.isfile(pretrained):
+        pretrained= str(pretrained).lower()=="true"
+        model_path = ""
+    else:
+        model_path = str(pretrained)
     # ----------------------------------------------------------------------------------------------------------------------------#
     #   权值文件的下载请看README，可以通过网盘下载。模型的 预训练权重 对不同数据集是通用的，因为特征是通用的。
     #   模型的 预训练权重 比较重要的部分是 主干特征提取网络的权值部分，用于进行特征提取。
@@ -221,7 +227,7 @@ def main():
     #   一般来讲，网络从0开始的训练效果会很差，因为权值太过随机，特征提取效果不明显，因此非常、非常、非常不建议大家从0开始训练！
     #   如果一定要从0开始，可以了解imagenet数据集，首先训练分类模型，获得网络的主干部分权值，分类模型的 主干部分 和该模型通用，基于此进行训练。
     # ----------------------------------------------------------------------------------------------------------------------------#
-    model_path = ""
+
 
     downsample_factor = DOWNSAMPLE_FACTOR
     input_shape = [IMGSZ, IMGSZ]
@@ -307,13 +313,15 @@ def main():
     #   下载预训练权重
     # ----------------------------------------------------#
 
-    if pretrained:
+    if pretrained and isinstance(pretrained,bool):
         if distributed:
             if local_rank == 0:
                 download_weights(backbone)
             dist.barrier()
         else:
             download_weights(backbone)
+    else:
+        pretrained=False
 
     if ARCH.lower()=="unet":
         from nets.model.UNet import UNet

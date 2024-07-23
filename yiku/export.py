@@ -20,8 +20,9 @@ try:
     # We recommend adjusting this value in production.
         profiles_sample_rate=1.0,
 )
-except Exception as e:
-    print("远程日志已经禁用")
+except ImportError as e:
+    if os.system("pip install sentry_sdk")!=0:
+        print("远程日志已经禁用")
 sys.path.append(os.getcwd())
 from yiku.nets.model.Labs.labs import Labs
 from pathlib import Path

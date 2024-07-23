@@ -67,7 +67,7 @@ try:
     # We recommend adjusting this value in production.
         profiles_sample_rate=1.0,
 )
-except Exception as e:
+except ImportError as e:
     print("远程日志已经禁用")
 def signal_handler(signal, frame):
     print("操作取消 Operation Cancelled")

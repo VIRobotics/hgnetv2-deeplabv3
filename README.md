@@ -7,6 +7,9 @@ yiku-seg 是一个由仪酷开发的语义分割工具，其中集成了大量�
 
 ---
 
+### 如果你想要图形化界面训练的话，可以使用仪酷开发的图形化外壳
+[点我查看详情](https://www.virobotics.net/ProductInfoCategory?categoryId=842615,842984)
+
 
 ## Top News
 

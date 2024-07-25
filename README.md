@@ -161,6 +161,11 @@ config,ini里面的base字段 加上`single_ch=true`可以启用单通道输入�
 可完成预测。    
 4、在predict.py里面进行设置可以进行fps测试、整个文件夹的测试和video视频检测。
 
+### 产线化部署
+
+#### 使用Labview部署
+1. 参考[导出步骤](#导出步骤) 导出模型，在导出时候加上``` --no-pre --no-post```参数
+2. 前往[labview AI加速工具 文档页面](https://doc.virobotics.net/index.html) 进行后续部署操作
 
 ### Reference
 
